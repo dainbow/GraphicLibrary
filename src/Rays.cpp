@@ -5,7 +5,10 @@ bool VocabCmp(const Vector& vec1, const Vector& vec2) {
 }
 
 bool TgCmp(const Vector& vec1, const Vector& vec2) {
-    return (vec1.y_ / vec1.x_) <= (vec2.y_ / vec2.x_);
+    float tg1 = (!CmpFloat(vec1.x_, 0)) ? vec1.y_ / vec1.x_ : INFINITY; 
+    float tg2 = (!CmpFloat(vec2.x_, 0)) ? vec2.y_ / vec2.x_ : INFINITY;
+
+    return tg1 <= tg2;
 }
 
 bool CheckPointInPolygon(const Vector& intersectionPoint, Vector* points, const uint32_t pointsAmount) {
@@ -25,7 +28,7 @@ bool CheckPointInPolygon(const Vector& intersectionPoint, Vector* points, const 
 
     std::sort(points + 1, points + pointsAmount, TgCmp);
 
-    Vector curTg = intersectionPoint - *zeroPoint;
+    Vector curTg = intersectionPoint -  *zeroPoint;
 
     Vector* firstPoint = nullptr;
     Vector* secondPoint = nullptr;
@@ -114,63 +117,77 @@ bool CheckPointInPolygon3D(const Vector3D& intersectionPoint, const Vector3D* po
     return result;
 }
 
-const Vector3D* GetIntersectionSection(const Vector3D& intersectionPoint, const Matrix& planeCoefs) {
+Vector3D GetIntersectionSection(const Vector3D& intersectionPoint, const Matrix& planeCoefs) {
     Vector3D* points  = new Vector3D[planeCoefs.GetRows() - 1]();
     uint32_t curPoint = 0;
 
-    for (uint32_t curPlane = 2; curPlane < planeCoefs.GetRows(); curPlane++) {
+    Matrix mainSystem(3, 3);
+    Matrix extensionColumn(3, 1);
+
+    for (uint32_t curColumn = 0; curColumn < 3; curColumn++) {
+        mainSystem.SetElem(0, curColumn, *planeCoefs.GetElem(0, curColumn));
+    }
+    extensionColumn.SetElem(0, 0, *planeCoefs.GetElem(0, 3));
+
+    for (uint32_t curPlane = 1; curPlane < planeCoefs.GetRows(); curPlane++) {
         // A1x + B1y + C1z + D1 = 0
         // A2x + B2y + C2z + D2 = 0
         // A3x + B3y + C3z + D3 = 0
-        Matrix mainSystem(3, 3);
-        Matrix extensionColumn(3, 1);
 
-        for (uint32_t curRow = 0; curRow < 3; curRow++) {
+        for (uint32_t curColumn = 0; curColumn < 3; curColumn++) {
+            mainSystem.SetElem(1, curColumn, *planeCoefs.GetElem(curPlane, curColumn));
+        }
+        extensionColumn.SetElem(1, 0, *planeCoefs.GetElem(curPlane, 3));
+
+
+        for (uint32_t curSecondPlane = curPlane + 1; curSecondPlane < planeCoefs.GetRows(); curSecondPlane++) {
             for (uint32_t curColumn = 0; curColumn < 3; curColumn++) {
-                mainSystem.SetElem(curRow, curColumn, *planeCoefs.GetElem(curRow, curColumn));
+                mainSystem.SetElem(2, curColumn, *planeCoefs.GetElem(curSecondPlane, curColumn));
+            }
+            extensionColumn.SetElem(2, 0, *planeCoefs.GetElem(curSecondPlane, 3));
+
+            float delta = mainSystem.CalculateDeterminant();
+            if (CmpFloat(delta, 0))
+                continue;
+
+            float deltas[3] = {};
+            for (uint32_t curColumn = 0; curColumn < 3; curColumn++) {
+                mainSystem.SwapColumns(curColumn, 0, extensionColumn);
+                deltas[curColumn] = mainSystem.CalculateDeterminant(); 
+                mainSystem.SwapColumns(curColumn, 0, extensionColumn);
             }
 
-            extensionColumn.SetElem(curRow, 0, *planeCoefs.GetElem(curRow, 3));
+            points[curPoint++] = {deltas[0] / delta, deltas[1] / delta, deltas[2] / delta};
+            std::cout << points[curPoint - 1] << std::endl;
         }
-
-        float delta = mainSystem.CalculateDeterminant();
-        if (CmpFloat(delta, 0))
-            continue;
-
-        float deltas[3] = {};
-        for (uint32_t curColumn = 0; curColumn < 3; curColumn++) {
-            mainSystem.SwapColumns(curColumn, 0, extensionColumn);
-            deltas[curColumn] = mainSystem.CalculateDeterminant(); 
-            mainSystem.SwapColumns(curColumn, 0, extensionColumn);
-        }
-
-        points[curPoint++] = {deltas[0] / delta, deltas[1] / delta, deltas[2] / delta};
     }
 
     assert((curPoint > 2) && "CAN'T FIND POLYGON");
     bool result = CheckPointInPolygon3D(intersectionPoint, points, curPoint);
-        
+    std::cout << "RESULT IS " << result << std::endl;    
+
     delete[] points;
     if (result)
-        return &intersectionPoint;
+        return intersectionPoint;
 
-    return nullptr;
+    return {NAN, NAN, NAN};
 }
 
-const Vector3D* GetIntersection(const Vector3D& rayPoint, const Vector3D& rayVector, const Matrix& planeCoefs) {
+Vector3D GetIntersection(const Vector3D& rayPoint, const Vector3D& rayVector, const Matrix& planeCoefs) {
     if (planeCoefs.GetColumns() != 4)
-        return nullptr;
+        return {NAN, NAN, NAN};
 
     if (planeCoefs.GetRows() == 0) {
-        return nullptr;
+        return {NAN, NAN, NAN};
     }
 
     if (planeCoefs.GetRows() == 2) {
-        return nullptr;
+        return {NAN, NAN, NAN};
     }
 
     float intersectionTime = - (*planeCoefs.GetElem(0, 0) * rayPoint.x_ + *planeCoefs.GetElem(0, 1) * rayPoint.y_  + *planeCoefs.GetElem(0, 2) * rayPoint.z_ + *planeCoefs.GetElem(0, 3)) 
                             /  (*planeCoefs.GetElem(0, 0) * rayVector.x_+ *planeCoefs.GetElem(0, 1) * rayVector.y_ + *planeCoefs.GetElem(0, 2) * rayVector.z_);
+    assert(std::isfinite(intersectionTime));
 
     Vector3D intersectionPoint = {rayVector.x_ * intersectionTime + rayPoint.x_,
                                   rayVector.y_ * intersectionTime + rayPoint.y_,
@@ -180,5 +197,43 @@ const Vector3D* GetIntersection(const Vector3D& rayPoint, const Vector3D& rayVec
         return GetIntersectionSection(intersectionPoint, planeCoefs);
     }
 
-    return nullptr;
+    return {NAN, NAN, NAN};
 }
+
+Vector3D GetIntersectionSection(const Vector3D& rayPoint, const Vector3D& rayVector, 
+                                       const Vector3D& sphereCenter, const float radius) {
+    // (x - x0)^2 + (y - y0)^2 + (z - z0)^2 = R^2
+    // x = lt + x1
+    // y = mt + y1
+    // z = nt + z1
+    // (lt + x1 - x0)^2 + (mt + y1 - y0)^2 + (nt + z1 - z0)^2 = R^2
+    // l^2t^2 + x1^2 + x0^2 + 2lt(x1) - 2lt(x0) - 2(x1)(x0) +
+    // m^2t^2 + y1^2 + y0^2 + 2mt(y1) - 2mt(y0) - 2(y1)(y0) +
+    // n^2t^2 + z1^2 + z0^2 + 2nt(z1) - 2nt(z0) - 2(z1)(z0) = R^2
+    // (l^2 + m^2 + n^2)t^2 + (2l(x1 - x0) + 2m(y1 - y0) + 2n(z1 - z0))t + x1^2
+
+    float c = powf(rayPoint.x_, 2) + powf(rayPoint.y_, 2) + powf(rayPoint.z_, 2) +
+              powf(sphereCenter.x_, 2) + powf(sphereCenter.y_, 2) + powf(sphereCenter.z_, 2) - powf(radius, 2);
+
+    float a = powf(rayVector.x_, 2) + powf(rayVector.y_, 2) + powf(rayVector.z_, 2);
+
+    Vector3D deltaVector = rayPoint - sphereCenter;
+    float b = 2 * (deltaVector * rayVector);
+
+    float descriminant = powf(b, 2) - 4 * a * c;
+    if (descriminant <= 0) {
+        return {NAN, NAN, NAN};
+    }
+
+    float t0 = (-b + fsqrt(descriminant)) / (2 * a);
+    float t1 = (-b - fsqrt(descriminant)) / (2 * a);
+
+    Vector3D vector0 = (rayVector * t0);
+    Vector3D vector1 = (rayVector * t1);
+
+    if (vector0.LengthSquared() < vector1.LengthSquared()) {
+        return vector0;
+    }
+
+    return vector1;
+}   

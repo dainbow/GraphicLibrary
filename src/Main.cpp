@@ -3,11 +3,11 @@
 int main()
 {
     Matrix matrix(4, 4);
-    
-    matrix.SetElem(0, 0, 1);
-    matrix.SetElem(0, 1, 1);
+
+    matrix.SetElem(0, 0, 0);
+    matrix.SetElem(0, 1, 0);
     matrix.SetElem(0, 2, 1);
-    matrix.SetElem(0, 3, -1);
+    matrix.SetElem(0, 3, 0);
 
     matrix.SetElem(1, 0, -1);
     matrix.SetElem(1, 1, 1);
@@ -19,18 +19,23 @@ int main()
     matrix.SetElem(2, 2, 0);
     matrix.SetElem(2, 3, 0);
 
-    matrix.SetElem(3, 0, 0);
-    matrix.SetElem(3, 1, 0);
+    matrix.SetElem(3, 0, 1);
+    matrix.SetElem(3, 1, 1);
     matrix.SetElem(3, 2, 1);
-    matrix.SetElem(3, 3, 0);
+    matrix.SetElem(3, 3, -1);
+    
+    // 0 0 1 0
+    // -1 1 1 -1
+    // 0 1 0 0
+    // 1 1 1 -1
+
 
     // (0, 0.19, 0), (0, 0.68, -1)
 
     Vector3D startPoint = {0, 0.68, -1};
     Vector3D vector     = {0, 0.19 - 0.68, 1};
 
-    const Vector3D* answer = GetIntersection(startPoint, vector, matrix);
-
+    Vector3D answer = GetIntersection(startPoint, vector, matrix);
 
     // Window newWindow(630, 420);
 

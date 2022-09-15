@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 #include <cassert>
 #include <algorithm>
@@ -27,28 +28,7 @@ class Matrix {
             }
         }
 
-        Matrix& operator=(const Matrix& cloneMatrix) {
-            if (this != &cloneMatrix) {
-                return *this;
-            }
-
-            this->~Matrix();
-
-            array_ = new float*[cloneMatrix.GetRows()];
-
-            rowsAmount_   = cloneMatrix.rowsAmount_; 
-            columnAmount_ = cloneMatrix.columnAmount_;
-
-            for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
-                array_[curRow] = new float[columnAmount_];
-
-                for (uint32_t curColumn = 0; curColumn < columnAmount_; curColumn++) {
-                    array_[curRow][curColumn] = cloneMatrix.array_[curRow][curColumn];
-                }
-            }
-
-            return *this;
-        }
+        Matrix& operator=(const Matrix& cloneMatrix);
 
         Matrix(const uint32_t rows = 1, const uint32_t columns = 1) :
             array_(new float*[rows]),
@@ -67,6 +47,8 @@ class Matrix {
             return rowsAmount_;
         }
 
+        bool SetRow(const uint32_t thisRowNumber, const uint32_t otherRowNumber, const Matrix& secondMAtrix);
+
         bool AddRow(const Matrix& rowToAdd, const uint32_t rowNumber);
         bool AddRow(const uint32_t row1, const uint32_t row2);
 
@@ -75,7 +57,7 @@ class Matrix {
 
         bool SwapColumns(const uint32_t column1, const uint32_t column2, Matrix& matrix2);
 
-        float CalculateDeterminant();
+        float CalculateDeterminant() const;
 
         float* GetElem(const uint32_t curRow, const uint32_t curColumn) const {
             if ((curRow >= rowsAmount_) || (curColumn >= columnAmount_)) {
@@ -105,3 +87,5 @@ class Matrix {
             delete[] array_;
         }  
 };
+
+std::ostream& operator<<(std::ostream& outStream, const Matrix& matrix);
