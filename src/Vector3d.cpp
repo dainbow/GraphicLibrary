@@ -1,14 +1,14 @@
 #include "Vector3d.hpp"
 
-float Vector3D::operator*(const Vector3D& vector2) const {
+double Vector3D::operator*(const Vector3D& vector2) const {
     return x_ * vector2.x_ + y_ * vector2.y_ + z_ * vector2.z_;
 }
 
-void Vector3D::Resize(const float newSize) {
-    *this *= sqrtf(newSize / Length());
+void Vector3D::Resize(const double newSize) {
+    *this *= newSize / Length();
 }
 
-void Vector3D::operator*=(const float scalar) {
+void Vector3D::operator*=(const double scalar) {
     x_ *= scalar;
     y_ *= scalar;
     z_ *= scalar;
@@ -26,7 +26,7 @@ void Vector3D::operator-=(const Vector3D& vectorToSub) {
     z_ -= vectorToSub.z_;
 }
 
-Vector3D Vector3D::operator*(const float scalar) const {
+Vector3D Vector3D::operator*(const double scalar) const {
     Vector3D result = *this;
     result *= scalar;
 
@@ -52,18 +52,22 @@ Vector3D Vector3D::operator-() const {
 }
 
 void Vector3D::Normalise() {
-    *this *= float(1) / Length();
+    *this *= double(1) / Length();
 }
 
-float Vector3D::LengthSquared() const {
+bool Vector3D::IsNan() const {
+    return std::isnan(x_) && std::isnan(y_) && std::isnan(z_);
+}
+
+double Vector3D::LengthSquared() const {
     return (*this) * (*this);
 }
 
-float Vector3D::Length() const {
-    return sqrtf(LengthSquared());
+double Vector3D::Length() const {
+    return sqrt(LengthSquared());
 }
 
-float Vector3D::CosBetween(const Vector3D& vector2) const {
+double Vector3D::CosBetween(const Vector3D& vector2) const {
     return ((*this) * vector2) / (Length() * vector2.Length()); 
 }
 

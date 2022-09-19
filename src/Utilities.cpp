@@ -1,5 +1,5 @@
 #include "Utilities.hpp"
 
-bool CmpFloat(const float num1, const float num2) {
-    return fabs(num1 - num2) <= __FLT_EPSILON__;
+bool CmpDbl(const double num1, const double num2) {
+    return fabsf64(num1 - num2) <= __FLT_EPSILON__;
 }

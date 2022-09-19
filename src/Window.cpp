@@ -29,9 +29,9 @@ bool Window::PollEvent(Event* curEvent) {
 }
 
 void Window::DrawRectangle(const Rectangle& myRectangle) const {
-    sf::RectangleShape rectangle(sf::Vector2f(myRectangle.x1y1_.x_ - myRectangle.x0y0_.x_, 
-                                              myRectangle.x1y1_.y_ - myRectangle.x0y0_.y_));
-    rectangle.setPosition({myRectangle.x0y0_.x_, myRectangle.x0y0_.y_});
+    sf::RectangleShape rectangle(sf::Vector2f(float(myRectangle.x1y1_.x_ - myRectangle.x0y0_.x_), 
+                                              float(myRectangle.x1y1_.y_ - myRectangle.x0y0_.y_)));
+    rectangle.setPosition({float(myRectangle.x0y0_.x_), float(myRectangle.x0y0_.y_)});
 
     sf::Color curColor(myRectangle.color_.red_, myRectangle.color_.green_, myRectangle.color_.blue_);
     rectangle.setFillColor(curColor);
@@ -58,10 +58,10 @@ void Window::DrawLine(const CoordSystem& curSystem, const Vector& curVector, con
     if (curSystem.CheckPoint(startPoint) || curSystem.CheckPoint(startPoint + curVector))
         return;
     
-    sf::Vertex line[] = {sf::Vertex(sf::Vector2f(curSystem.ConvertXToPxl(startPoint.x_), 
-                            curSystem.ConvertYToPxl(startPoint.y_))),
-                         sf::Vertex(sf::Vector2f(curSystem.ConvertXToPxl(startPoint.x_ + curVector.x_), 
-                            curSystem.ConvertYToPxl(startPoint.y_ + curVector.y_)))};
+    sf::Vertex line[] = {sf::Vertex(sf::Vector2f(float(curSystem.ConvertXToPxl(startPoint.x_)), 
+                            float(curSystem.ConvertYToPxl(startPoint.y_)))),
+                         sf::Vertex(sf::Vector2f(float(curSystem.ConvertXToPxl(startPoint.x_ + curVector.x_)), 
+                            float(curSystem.ConvertYToPxl(startPoint.y_ + curVector.y_))))};
 
     line[0].color = sf::Color::Black;
     line[1].color = sf::Color::Black;
@@ -83,8 +83,8 @@ void Window::DrawText(Text& text) const {
 void Window::DrawButton(Button& button) const {
     DrawRectangle({button.x0y0_, button.x1y1_, button.color_});
 
-    if (!CmpFloat(button.buttonText_.position_.x0y0_.x_, -1) ||
-        !CmpFloat(button.buttonText_.position_.x0y0_.y_, -1)) {
+    if (!CmpDbl(button.buttonText_.position_.x0y0_.x_, -1) ||
+        !CmpDbl(button.buttonText_.position_.x0y0_.y_, -1)) {
 
         DrawText(button.buttonText_);
     }
@@ -92,7 +92,7 @@ void Window::DrawButton(Button& button) const {
 
 void Window::DrawImage(const Image& image, const Vector& x0y0) const {
     sf::RectangleShape rectangle(sf::Vector2f(float(image.width_), float(image.height_)));
-    rectangle.setPosition({x0y0.x_, x0y0.y_});
+    rectangle.setPosition({float(x0y0.x_), float(x0y0.y_)});
 
     sf::Texture curTexture = {};
     curTexture.loadFromImage(image.realImage_);

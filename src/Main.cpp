@@ -2,272 +2,152 @@
 
 int main()
 {
-    Matrix matrix(4, 4);
-
-    matrix.SetElem(0, 0, 0);
-    matrix.SetElem(0, 1, 0);
-    matrix.SetElem(0, 2, 1);
-    matrix.SetElem(0, 3, 0);
-
-    matrix.SetElem(1, 0, -1);
-    matrix.SetElem(1, 1, 1);
-    matrix.SetElem(1, 2, 1);
-    matrix.SetElem(1, 3, -1);
-
-    matrix.SetElem(2, 0, 0);
-    matrix.SetElem(2, 1, 1);
-    matrix.SetElem(2, 2, 0);
-    matrix.SetElem(2, 3, 0);
-
-    matrix.SetElem(3, 0, 1);
-    matrix.SetElem(3, 1, 1);
-    matrix.SetElem(3, 2, 1);
-    matrix.SetElem(3, 3, -1);
+    Window window(windowWidth, windowHeight);
     
-    // 0 0 1 0
-    // -1 1 1 -1
-    // 0 1 0 0
-    // 1 1 1 -1
+    Vector3D cameraCoords = {0, 0, 0};
 
+    Image curImage = {};
+    curImage.Create(600, 600, {0x00, 0x00, 0x00});
 
-    // (0, 0.19, 0), (0, 0.68, -1)
+    Sphere sph1({0, 0, 20}, 5, 0x10901000, 3, 0.8);
 
-    Vector3D startPoint = {0, 0.68, -1};
-    Vector3D vector     = {0, 0.19 - 0.68, 1};
+    Matrix plane1(1, 4);
+    plane1.SetElem(0, 0, 0);
+    plane1.SetElem(0, 1, 1);
+    plane1.SetElem(0, 2, 0);
+    plane1.SetElem(0, 3, -15);
 
-    Vector3D answer = GetIntersection(startPoint, vector, matrix);
+    Matrix limits(4, 5);
+    limits.SetElem(0, 0, 1);
+    limits.SetElem(0, 1, 0);
+    limits.SetElem(0, 2, 0);
+    limits.SetElem(0, 3, -25);
+    limits.SetElem(0, 4, 0);
 
-    // Window newWindow(630, 420);
+    limits.SetElem(1, 0, 1);
+    limits.SetElem(1, 1, 0);
+    limits.SetElem(1, 2, 0);
+    limits.SetElem(1, 3, 25);
+    limits.SetElem(1, 4, 1);
 
-    // Button sphereButton = {{70, 100}, {570, 200}, {0xFF, 0xFF, 0xFF}, "Sphere", {0x00, 0x00, 0x00}};
-    // Button arrowsButton = {{70, 210}, {570, 310}, {0x00, 0x00, 0xFF}, "Arrows", {0x00, 0x00, 0x00}};
+    limits.SetElem(2, 0, 0);
+    limits.SetElem(2, 1, 0);
+    limits.SetElem(2, 2, 1);
+    limits.SetElem(2, 3, -100);
+    limits.SetElem(2, 4, 0);
 
-    // Event curEvent = {};
-    // while (newWindow.IsOpen())
-    // {
-    //     newWindow.Clear();
+    limits.SetElem(3, 0, 0);
+    limits.SetElem(3, 1, 0);
+    limits.SetElem(3, 2, 1);
+    limits.SetElem(3, 3, -30);
+    limits.SetElem(3, 4, 1);
 
-    //     while (newWindow.PollEvent(&curEvent))
-    //     {
-    //         switch (curEvent.type_)
-    //         {
-    //         case Event::EventType::close:
-    //             newWindow.~Window();
-    //             break;
-    //         case Event::EventType::mouseButtonPressed:
-    //             if (sphereButton.IsPressed(curEvent.mouseCoords_))
-    //             {
-    //                 newWindow.~Window();
-    //                 SphereGame();
-    //             }
+    Plane pln1(plane1, limits, 0x50c878, 1, 0.8);
 
-    //             if (arrowsButton.IsPressed(curEvent.mouseCoords_))
-    //             {
-    //                 ArrowsGame(&newWindow);
-    //             }
-    //             break;
-    //         case Event::EventType::nothing:
-    //             break;
-    //         default:
-    //             break;
-    //         }
-    //     }
+    BaseObject* objects[]  = {&pln1, &sph1};
+    uint32_t objectsAmount = 2;
 
-    //     newWindow.DrawButton(sphereButton);
-    //     newWindow.DrawButton(arrowsButton);
-
-    //     newWindow.Display();
-    // }
-}
-
-void SphereGame()
-{
-    Window newWindow(700, 700);
-
-    const float specularN = float(10);
-    MyColor ambient(float(0.01), float(0.01), float(0.01), float(0.1));
-
-    const int32_t sphereRadius = 300;
-    Vector3D sphereCrds = {350, 350, 0};
-
-    Vector3D cameraCrds = {350, 350, 900};
+    LightSource light1 = {{-20, 0, 0}, {0xab274f00}, 1};
+    LightSource light2 = {{12.5, -1, 30.5}, {0xab274f00}, 1};
     
+    LightSource* lights[] = {&light2, &light1};
+    uint32_t lightsAmount = 1;
 
-    MyColor lightColor = {0xab, 0x34, 0x3a};
-    MyColor materialColor = {0xff, 0x90, 0xff};
+    while(window.IsOpen()) {
+        window.Clear();
+        PollEvent(window);
 
-    float t = 0;
-    while (newWindow.IsOpen())
-    {
-        Vector3D lampCrds = {350 + 350 * cosf(t), 350 + 350 * sinf(t), 900};
-        newWindow.Clear();
+        for (double curX = -(windowWidth / 2); curX < (windowWidth / 2); curX++) {
+            for (double curY = -(windowHeight / 2); curY < (windowHeight / 2); curY++) {
+                const double convertedX = curX * (virtualWidth  / windowWidth);
+                const double convertedY = curY * (virtualHeight / windowHeight);
 
-        Image curImage = {};
-        curImage.Create(700, 700, {0x00, 0x00, 0x00});
+                const Vector3D virtualPoint = {convertedX, convertedY, displayDistance};
 
-        Event curEvent = {};
-        while (newWindow.PollEvent(&curEvent))
-        {
-            switch (curEvent.type_)
-            {
-            case Event::EventType::close:
-                newWindow.~Window();
-                break;
-            case Event::EventType::mouseButtonPressed:
-                break;
-            case Event::EventType::nothing:
-                break;
-            default:
-                break;
-            }
+                Ray curRay = {cameraCoords, virtualPoint - cameraCoords, 1.2};
+                curRay.vector_.Normalise();
 
-            curEvent.type_ = Event::EventType::nothing;
-        }
+                Ray leastRay = {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
 
-        for (int32_t curX = 0; curX < 700; curX++)
-        {
-            for (int32_t curY = 0; curY < 700; curY++)
-            {
-                if (((350 - curX) * (350 - curX) + (350 - curY) * (350 - curY)) >= (sphereRadius * sphereRadius))
-                {
-                    curImage.SetPixel(curX, curY, {0xFF, 0xFF, 0xFF});
+                double leastDistance   = __DBL_MAX__;
+                uint32_t leastObject   = UINT32_MAX;
+
+                for (uint32_t curObject = 0; curObject < objectsAmount; curObject++) {
+                    Ray newRay = objects[curObject]->Trace(curRay);
+                    Vector3D curDistance = curRay.point_ - newRay.point_;
+
+                    if (!newRay.IsNan() && (leastRay.IsNan() || (curDistance.LengthSquared() < leastDistance))) {
+                        leastRay = newRay;
+
+                        leastDistance = curDistance.LengthSquared();
+                        leastObject   = curObject;
+                    }
                 }
-                else
-                {
-                    float curZ = sqrtf(float(sphereRadius * sphereRadius - (350 - curX) * (350 - curX) - (350 - curY) * (350 - curY)));
-                    Vector3D curPoint = {float(curX), float(curY), curZ};
 
-                    Vector3D normalVector = curPoint - sphereCrds;
-                    normalVector.Normalise();
+                if (!leastRay.IsNan()) {
+                    MyColor newColor = 0;
+                    for (uint32_t curLight = 0; curLight < lightsAmount; curLight++) {
+                        newColor += CalcColor(leastRay, objects[leastObject], cameraCoords, lights[curLight]);
+                    }
 
-                    Vector3D lightVector  = lampCrds - curPoint;
-                    lightVector.Normalise();
-
-                    Vector3D camVector    = cameraCrds - curPoint;
-                    camVector.Normalise();
-
-                    float cosAlpha = normalVector.CosBetween(lightVector);
-
-                    normalVector *= fsqrt(2 * cosAlpha);
-                    if (cosAlpha < 0)
-                        cosAlpha = 0;
-
-                    Vector3D reflectedLightVector = normalVector - lightVector;
-                    reflectedLightVector.Normalise();
-
-                    float cosBeta = reflectedLightVector.CosBetween(camVector);
-                    if (cosBeta < 0)
-                        cosBeta = 0;
-
-                    float specular = powf(cosBeta, specularN);
-                    
-                    MyColor newColor = lightColor * materialColor * cosAlpha +
-                                       lightColor * specular +
-                                       lightColor * materialColor * ambient;
-
-                    curImage.SetPixel(curX, curY, newColor);
+                    curImage.SetPixel(uint32_t(curX + (windowWidth / 2)), uint32_t(curY + (windowHeight / 2)), newColor);
+                }
+                else {
+                    curImage.SetPixel(uint32_t(curX + (windowWidth / 2)), uint32_t(curY + (windowHeight / 2)), {0x7d, 0x7f, 0x7d});
                 }
             }
         }
 
-        newWindow.DrawImage(curImage, {0, 0});
-        newWindow.Display();
-
-        t += float(0.1);
+        window.DrawImage(curImage, {0, 0});
+        window.Display();
     }
 }
 
-void ArrowsGame(Window *newWindow)
-{
-    CoordSystem s1 = {{5, 5}, {405, 405}, {10, 10}, {30, 30}};
-    CoordSystem s2 = {{420, 5}, {620, 205}, {10, 10}, {30, 30}};
-
-    Button resetButton = {{420, 220}, {620, 270}, {0xFF, 0xFF, 0xFF}, "Reset", {0x8b, 0x00, 0xFF}};
-    Button closeButton = {{420, 280}, {620, 330}, {0xFF, 0x00, 0x00}, "Close", {0x00, 0x00, 0x00}};
-
-    Vector firstArrow = {0, 10};
-    Vector secondArrow = {0, -10};
-
-    Vector firstRotator = {0, 9};
-    Vector secondRotator = {0, -9};
-
-    Vector middleCoords = {20, 20};
-
+void PollEvent(Window& window) {
     Event curEvent = {};
-    while (newWindow->IsOpen())
+
+    while (window.PollEvent(&curEvent))
     {
-        newWindow->Clear();
-
-        while (newWindow->PollEvent(&curEvent))
+        switch (curEvent.type_)
         {
-            switch (curEvent.type_)
-            {
-            case Event::EventType::close:
-                newWindow->~Window();
-                break;
-            case Event::EventType::mouseButtonPressed:
-            {
-                if (resetButton.IsPressed(curEvent.mouseCoords_))
-                {
-                    firstArrow = {0, 10};
-                    secondArrow = {0, -10};
-
-                    firstRotator = {0, 9};
-                    secondRotator = {0, -9};
-                }
-
-                if (s1.IsPressed(curEvent.mouseCoords_))
-                {
-                    Vector mathCoords = s1.ConvertVectorToMath(curEvent.mouseCoords_);
-
-                    if (GetDistanceSquared(middleCoords, middleCoords + firstArrow, mathCoords) <
-                        GetDistanceSquared(middleCoords, middleCoords + secondArrow, mathCoords))
-                    {
-                        firstArrow = mathCoords;
-                        firstArrow -= middleCoords;
-
-                        firstArrow.Resize(ArrowLength);
-                    }
-                    else
-                    {
-                        secondArrow = mathCoords;
-                        secondArrow -= middleCoords;
-
-                        secondArrow.Resize(ArrowLength);
-                    }
-                }
-
-                if (closeButton.IsPressed(curEvent.mouseCoords_))
-                {
-                    newWindow->~Window();
-                }
-
-                break;
-            }
-            case Event::EventType::nothing:
-                break;
-            default:
-                break;
-            }
-
-            curEvent.type_ = Event::EventType::nothing;
+        case Event::EventType::close:
+            window.~Window();
+            break;
+        case Event::EventType::mouseButtonPressed:
+            break;
+        case Event::EventType::nothing:
+            break;
+        default:
+            break;
         }
 
-        firstRotator.Rotate(RotateCoeft);
-        secondRotator.Rotate(RotateCoeft);
-
-        newWindow->DrawCoordSystem(s1);
-        newWindow->DrawCoordSystem(s2);
-
-        newWindow->DrawVector(s1, firstArrow, middleCoords);
-        newWindow->DrawVector(s1, secondArrow, middleCoords);
-
-        newWindow->DrawVector(s2, firstRotator, middleCoords);
-        newWindow->DrawVector(s2, secondRotator, middleCoords);
-
-        newWindow->DrawButton(resetButton);
-        newWindow->DrawButton(closeButton);
-
-        newWindow->Display();
+        curEvent.type_ = Event::EventType::nothing;
     }
+}
+
+MyColor CalcColor(const Ray& ray, const BaseObject* object, const Vector3D camCoords, const LightSource* light) {
+    Vector3D normal = object->GetNormal(ray);
+    
+    Ray lightRay = {light->point_, ray.point_ - light->point_};
+    lightRay.vector_.Normalise();
+
+    double cosAlpha = normal.CosBetween(-lightRay.vector_);
+    if (cosAlpha < 0)
+        cosAlpha = 0;
+
+    Ray reflectedLightRay = {ray.point_, object->GetReflected(ray.point_, lightRay)};
+
+    double cosBeta = reflectedLightRay.vector_.CosBetween(camCoords - ray.point_);
+    if (cosBeta < 0) 
+        cosBeta = 0;
+
+    double specular = pow(cosBeta, object->reflectibility_);
+
+    MyColor newColor =  object->color_ * light->color_ * cosAlpha + 
+                        light->color_  * specular +
+                        object->color_ * light->color_ * ambient;
+
+    newColor *= ray.power_;
+
+    return newColor;
 }

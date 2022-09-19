@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 
 class MyColor {
@@ -8,25 +9,25 @@ class MyColor {
         uint8_t green_;
         uint8_t blue_;
 
-        float fRed_;
-        float fGreen_;
-        float fBlue_;
+        double fRed_;
+        double fGreen_;
+        double fBlue_;
 
         MyColor() : red_(0xFF), green_(0xFF), blue_(0xFF),
         fRed_(1), fGreen_(1), fBlue_(1) {}
 
-        MyColor(uint8_t red, uint8_t green, uint8_t blue) : 
-        red_(red), green_(green), blue_(blue), 
-        fRed_(float(red) / float(0xFF)), fGreen_(float(green) / float(0xFF)), fBlue_(float(blue) / float(0xFF)) {}
+        MyColor(uint32_t color) : 
+        red_(uint8_t((color & 0xff000000) >> 24)), green_(uint8_t((color & 0x00ff0000) >> 16)), blue_(uint8_t((color & 0x0000ff00) >> 8)), 
+        fRed_(double(red_) / double(0xFF)), fGreen_(double(green_) / double(0xFF)), fBlue_(double(blue_) / double(0xFF)) {}
 
-        MyColor(float red, float green, float blue, float) :
-        red_(uint8_t(red * float(0xFF))), green_(uint8_t(green * float(0xFF))), blue_(uint8_t(blue * float(0xFF))),
+        MyColor(double red, double green, double blue) :
+        red_(uint8_t(red * double(0xFF))), green_(uint8_t(green * double(0xFF))), blue_(uint8_t(blue * double(0xFF))),
         fRed_(red), fGreen_(green), fBlue_(blue) {}
 
         void ClampFloats() {
-            fRed_   = float(red_) / 0xff;
-            fGreen_ = float(green_) / 0xff;
-            fBlue_  = float(blue_) / 0xff;
+            fRed_   = double(red_) / 0xff;
+            fGreen_ = double(green_) / 0xff;
+            fBlue_  = double(blue_) / 0xff;
         }
 
         void ClampUints() {
@@ -44,7 +45,7 @@ class MyColor {
             blue_  = uint8_t(fBlue_  * 0xff);
         }
 
-        void operator*=(MyColor mulColor) {
+        void operator*=(const MyColor& mulColor) {
             fRed_   *= mulColor.fRed_;
             fGreen_ *= mulColor.fGreen_;
             fBlue_  *= mulColor.fBlue_;
@@ -52,7 +53,15 @@ class MyColor {
             ClampUints();
         }
 
-        void operator+=(MyColor mulColor) {
+        void operator*=(const double scalar) {
+            fRed_   *= scalar;
+            fGreen_ *= scalar;
+            fBlue_  *= scalar;
+
+            ClampUints();
+        }
+
+        void operator+=(const MyColor& mulColor) {
             fRed_   += mulColor.fRed_;
             fGreen_ += mulColor.fGreen_;
             fBlue_  += mulColor.fBlue_;
@@ -60,7 +69,7 @@ class MyColor {
             ClampUints();
         }
 
-        MyColor operator*(float scalar) {
+        MyColor operator*(double scalar) const {
             MyColor result = *this;
 
             result.fRed_   *= scalar;
@@ -71,15 +80,14 @@ class MyColor {
             return result;
         }
 
-        MyColor operator*(MyColor mulColor) {
+        MyColor operator*(const MyColor& mulColor) const {
             MyColor result = *this;
             result *= mulColor;
 
-            result.ClampUints();
             return result;
         }
 
-        MyColor operator+(MyColor mulColor) {
+        MyColor operator+(MyColor mulColor) const {
             MyColor result = *this;
             result += mulColor;
 
@@ -87,3 +95,5 @@ class MyColor {
             return result;
         }
 };
+
+std::ostream& operator<<(std::ostream& outStream, const MyColor& color);

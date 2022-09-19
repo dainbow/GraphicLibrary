@@ -17,11 +17,11 @@ class CoordSystem : public Rectangle {
         Vector xyScale_;    
     public:
 
-    float ConvertXToPxl (const float mathX) const;
-    float ConvertYToPxl(const float mathY) const;
+    double ConvertXToPxl (const double mathX) const;
+    double ConvertYToPxl(const double mathY) const;
 
-    float ConvertXToMath(const float pxlX) const;
-    float ConvertYToMath(const float pxlY) const;
+    double ConvertXToMath(const double pxlX) const;
+    double ConvertYToMath(const double pxlY) const;
 
     Vector ConvertVectorToMath(const Vector& curVector) const;
     Vector ConvertVectorToPxl(const Vector& curVector) const;

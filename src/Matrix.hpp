@@ -9,18 +9,22 @@
 
 class Matrix {
     private:
-        float** array_;
+        double** array_;
 
-        uint32_t rowsAmount_;
-        uint32_t columnAmount_;
+        uint32_t rowsAmount_   = 0;
+        uint32_t columnAmount_ = 0;
 
     public:
-        Matrix(const Matrix& cloneMatrix) :
-        array_(new float*[cloneMatrix.GetRows()]),
-        rowsAmount_(cloneMatrix.rowsAmount_), 
-        columnAmount_(cloneMatrix.columnAmount_) {
+        Matrix(const Matrix& cloneMatrix) : array_(nullptr) {
+            rowsAmount_   = cloneMatrix.rowsAmount_;
+            columnAmount_ = cloneMatrix.columnAmount_;
+            if (!rowsAmount_ && !columnAmount_) {
+                return;
+            }
+
+            array_        = new double*[cloneMatrix.GetRows()];
             for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
-                array_[curRow] = new float[columnAmount_];
+                array_[curRow] = new double[columnAmount_];
 
                 for (uint32_t curColumn = 0; curColumn < columnAmount_; curColumn++) {
                     array_[curRow][curColumn] = cloneMatrix.array_[curRow][curColumn];
@@ -31,11 +35,11 @@ class Matrix {
         Matrix& operator=(const Matrix& cloneMatrix);
 
         Matrix(const uint32_t rows = 1, const uint32_t columns = 1) :
-            array_(new float*[rows]),
+            array_(new double*[rows]),
             rowsAmount_(rows), columnAmount_(columns) 
         {
             for (uint32_t curRow = 0; curRow < rows; curRow++) {
-                array_[curRow] = new float[columns];
+                array_[curRow] = new double[columns];
             }
         }
 
@@ -52,22 +56,22 @@ class Matrix {
         bool AddRow(const Matrix& rowToAdd, const uint32_t rowNumber);
         bool AddRow(const uint32_t row1, const uint32_t row2);
 
-        bool MulRow(const float& scalar, const uint32_t rowNumber);
+        bool MulRow(const double& scalar, const uint32_t rowNumber);
         bool SwapRows(const uint32_t row1, const uint32_t row2);
 
         bool SwapColumns(const uint32_t column1, const uint32_t column2, Matrix& matrix2);
 
-        float CalculateDeterminant() const;
+        double CalculateDeterminant() const;
 
-        float* GetElem(const uint32_t curRow, const uint32_t curColumn) const {
+        double GetElem(const uint32_t curRow, const uint32_t curColumn) const {
             if ((curRow >= rowsAmount_) || (curColumn >= columnAmount_)) {
-                return nullptr;
+                return NAN;
             }
             
-            return &array_[curRow][curColumn];
+            return array_[curRow][curColumn];
         }
 
-        bool SetElem(const uint32_t curRow, const uint32_t curColumn, const float& elem) {
+        bool SetElem(const uint32_t curRow, const uint32_t curColumn, const double& elem) {
             if ((curRow >= rowsAmount_) || (curColumn >= columnAmount_)) {
                 return 1;
             }
@@ -77,7 +81,7 @@ class Matrix {
             return 0;
         }
 
-        bool AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, const float& scalar);
+        bool AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, const double& scalar);
 
         ~Matrix() {
             for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {

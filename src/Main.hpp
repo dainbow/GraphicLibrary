@@ -9,11 +9,27 @@
 #include "Vector3d.hpp"
 #include "Image.hpp"
 
+#include "BaseObject.hpp"
 #include "Matrix.hpp"
-#include "Rays.hpp"
+#include "Sphere.hpp"
 
-const float RotateCoeft = float(0.0001);
-const float ArrowLength = 10;
+#include "LightSource.hpp"
 
-void SphereGame();
-void ArrowsGame(Window* newWindow);
+#include "Ray.hpp"
+#include "Plane.hpp"
+
+const float windowWidth  = 600;
+const float windowHeight = 600; 
+
+const float virtualWidth  = 10;
+const float virtualHeight = 10;
+
+const float displayDistance = 10;
+
+const float specularN       = 3;
+const MyColor ambient = {float(0.01), float(0.01), float(0.01)};
+
+void PollEvent(Window& window);
+
+MyColor CalcColor(const Ray& ray, const BaseObject* object, const Vector3D camCoords, const LightSource* light);
+

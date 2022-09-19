@@ -1,26 +1,26 @@
 #include "Vector.hpp"
 
-void Vector::Rotate(const float radian) {
-    float oldX = x_;
-    float oldY = y_;
+void Vector::Rotate(const double radian) {
+    double oldX = x_;
+    double oldY = y_;
 
-    x_ = cosf(radian) * oldX - sinf(radian) * oldY;
-    y_ = sinf(radian) * oldX + cosf(radian) * oldY;
+    x_ = cos(radian) * oldX - sin(radian) * oldY;
+    y_ = sin(radian) * oldX + cos(radian) * oldY;
 }
 
-float Vector::LengthSquared() const {
+double Vector::LengthSquared() const {
     return x_ * x_ + y_ * y_;
 }
 
-float Vector::Length() const {
-    return sqrtf(LengthSquared());
+double Vector::Length() const {
+    return sqrt(LengthSquared());
 }
 
-void Vector::Resize(const float newSize) {
+void Vector::Resize(const double newSize) {
     *this *= (newSize / Length());
 }
 
-void Vector::operator*=(float scalar) {
+void Vector::operator*=(double scalar) {
     x_ *= scalar;
     y_ *= scalar;
 }
@@ -35,7 +35,7 @@ void Vector::operator-=(const Vector& vectorToSub) {
     y_ -= vectorToSub.y_;
 }
 
-Vector Vector::operator*(float scalar) const {
+Vector Vector::operator*(double scalar) const {
     Vector result = *this;
     result *= scalar;
 
@@ -61,7 +61,7 @@ Vector Vector::operator-() const {
 }
 
 bool Vector::operator==(const Vector& vectorToCmp) const {
-    return (x_ == vectorToCmp.x_) && (y_ == vectorToCmp.y_);
+    return CmpDbl(x_, vectorToCmp.x_) && CmpDbl(y_, vectorToCmp.y_);
 }
 
 std::ostream& operator<<(std::ostream& outStream, const Vector& curVector) {
@@ -72,21 +72,21 @@ Vector CreatePerpendicularVector(const Vector& vector) {
     return {-vector.y_, vector.x_};
 }
 
-float GetDistanceSquared(const Vector& startPoint, const Vector& endPoint, const Vector& curPoint) {
+double GetDistanceSquared(const Vector& startPoint, const Vector& endPoint, const Vector& curPoint) {
     Vector CB = endPoint   - curPoint;
     Vector CA = startPoint - curPoint;
     Vector AB = endPoint - startPoint;
 
-    float a = CB.LengthSquared();
-    float b = CA.LengthSquared();
-    float c = AB.LengthSquared();
+    double a = CB.LengthSquared();
+    double b = CA.LengthSquared();
+    double c = AB.LengthSquared();
 
     if (((a + c) >= b) && ((b + c) >= a)) {
-        if (!CmpFloat(startPoint.x_, endPoint.x_)) {
-            float kCoef = (endPoint.y_ - startPoint.y_) / (endPoint.x_ - startPoint.x_);
-            float bCoef = startPoint.y_ - kCoef * startPoint.x_;
+        if (!CmpDbl(startPoint.x_, endPoint.x_)) {
+            double kCoef = (endPoint.y_ - startPoint.y_) / (endPoint.x_ - startPoint.x_);
+            double bCoef = startPoint.y_ - kCoef * startPoint.x_;
 
-            float numerator = curPoint.y_ - kCoef * curPoint.x_ - bCoef;
+            double numerator = curPoint.y_ - kCoef * curPoint.x_ - bCoef;
 
             return (numerator * numerator) / (1 + kCoef * kCoef);
         }
@@ -97,6 +97,6 @@ float GetDistanceSquared(const Vector& startPoint, const Vector& endPoint, const
     return (a < b) ? a : b;
 }
 
-float OrientSquare(const Vector& a, const Vector& b, const Vector& c) {
+double OrientSquare(const Vector& a, const Vector& b, const Vector& c) {
     return a.x_ * (b.y_ - c.y_) + b.x_ * (c.y_ - a.y_) + c.x_ * (a.y_ - b.y_);
 }

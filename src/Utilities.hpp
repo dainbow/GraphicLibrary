@@ -2,4 +2,4 @@
 
 #include <cmath>
 
-bool CmpFloat(const float num1, const float num2);
+bool CmpDbl(const double num1, const double num2);

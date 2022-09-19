@@ -14,6 +14,6 @@ Text::Text(const sf::String& string, const Rectangle& textRectangle, const MyCol
 
     realText_.setStyle(sf::Text::Style::Regular);
 
-    realText_.setPosition({textRectangle.x0y0_.x_, textRectangle.x0y0_.y_});
+    realText_.setPosition({float(textRectangle.x0y0_.x_), float(textRectangle.x0y0_.y_)});
     realText_.setCharacterSize(int((textRectangle.x1y1_.y_ - textRectangle.x0y0_.y_) * textCoef));
 }

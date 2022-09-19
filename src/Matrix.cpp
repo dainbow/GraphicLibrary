@@ -7,13 +7,13 @@ Matrix& Matrix::operator=(const Matrix& cloneMatrix) {
 
     this->~Matrix();
 
-    array_ = new float*[cloneMatrix.GetRows()];
+    array_ = new double*[cloneMatrix.GetRows()];
 
     rowsAmount_   = cloneMatrix.rowsAmount_; 
     columnAmount_ = cloneMatrix.columnAmount_;
 
     for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
-        array_[curRow] = new float[columnAmount_];
+        array_[curRow] = new double[columnAmount_];
 
         for (uint32_t curColumn = 0; curColumn < columnAmount_; curColumn++) {
             array_[curRow][curColumn] = cloneMatrix.array_[curRow][curColumn];
@@ -62,7 +62,7 @@ bool Matrix::AddRow(const Matrix& rowToAdd, const uint32_t rowNumber) {
 }
 
 
-bool Matrix::MulRow(const float& scalar, const uint32_t rowNumber) {
+bool Matrix::MulRow(const double& scalar, const uint32_t rowNumber) {
     if (rowNumber >= GetRows()) {
         return 1;
     }
@@ -80,7 +80,7 @@ bool Matrix::SwapRows(const uint32_t row1, const uint32_t row2) {
         return 1;
     }
 
-    float* swapThing = array_[row1];
+    double* swapThing = array_[row1];
     array_[row1] = array_[row2];
     array_[row2] = swapThing;
 
@@ -94,7 +94,7 @@ bool Matrix::SwapColumns(const uint32_t column1, const uint32_t column2, Matrix&
     }
 
     for (uint32_t curRow = 0; curRow < GetRows(); curRow++) {
-        float swapThing = array_[curRow][column1];
+        double swapThing = array_[curRow][column1];
         array_[curRow][column1] = matrix2.array_[curRow][column2];
         matrix2.array_[curRow][column2] = swapThing;
     }
@@ -103,7 +103,7 @@ bool Matrix::SwapColumns(const uint32_t column1, const uint32_t column2, Matrix&
 }
 
 
-bool Matrix::AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, const float& scalar) {
+bool Matrix::AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, const double& scalar) {
     if ((rowToAdd >= GetRows()) || (rowFromAdd >= GetRows())) {
         return 1;
     }
@@ -116,20 +116,20 @@ bool Matrix::AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, con
 }
 
 
-float Matrix::CalculateDeterminant() const {
+double Matrix::CalculateDeterminant() const {
     if ((GetColumns() != GetRows()) || (GetRows() == 0)) {
         return NAN;
     }
 
     Matrix copyMatrix(*this);
-    float answer = 1;
+    double answer = 1;
 
-    for (uint32_t curRow = 0; (curRow < GetRows()) && !CmpFloat(answer, 0); curRow++) {
-        float divider = copyMatrix.array_[curRow][curRow];
+    for (uint32_t curRow = 0; (curRow < GetRows()) && !CmpDbl(answer, 0); curRow++) {
+        double divider = copyMatrix.array_[curRow][curRow];
 
-        if (CmpFloat(divider, 0)) {
+        if (CmpDbl(divider, 0)) {
             for (uint32_t curNextRow = curRow + 1; curNextRow < GetRows(); curNextRow++) {
-                if (!CmpFloat(copyMatrix.array_[curNextRow][curRow], 0)) {
+                if (!CmpDbl(copyMatrix.array_[curNextRow][curRow], 0)) {
                     copyMatrix.SwapRows(curNextRow, curRow);
                     divider = copyMatrix.array_[curRow][curRow];
 
@@ -141,7 +141,7 @@ float Matrix::CalculateDeterminant() const {
         answer *= divider;
 
         for (uint32_t curNextRow = curRow + 1; curNextRow < GetRows(); curNextRow++) {
-            float curMul    = -copyMatrix.array_[curNextRow][curRow] / divider;
+            double curMul    = -copyMatrix.array_[curNextRow][curRow] / divider;
 
             copyMatrix.AddMuledRow(curNextRow, curRow, curMul);
         }
@@ -153,7 +153,7 @@ float Matrix::CalculateDeterminant() const {
 std::ostream& operator<<(std::ostream& outStream, const Matrix& matrix) {
     for (uint32_t curRow = 0; curRow < matrix.GetRows(); curRow++) {
         for (uint32_t curColumn = 0; curColumn < matrix.GetColumns(); curColumn++) {
-            outStream << *matrix.GetElem(curRow, curColumn) << " ";
+            outStream << matrix.GetElem(curRow, curColumn) << " ";
         }
         outStream << std::endl;
     }

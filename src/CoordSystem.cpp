@@ -1,18 +1,18 @@
 #include "CoordSystem.hpp"
 
-float CoordSystem::ConvertXToPxl(const float mathX) const {
+double CoordSystem::ConvertXToPxl(const double mathX) const {
     return x0y0_.x_ + (mathX - xyMin_.x_) * xyScale_.x_;
 }
 
-float CoordSystem::ConvertYToPxl(const float mathY) const {
+double CoordSystem::ConvertYToPxl(const double mathY) const {
     return x0y0_.y_ + (xyMax_.y_ - mathY) * xyScale_.y_;
 }
 
-float CoordSystem::ConvertXToMath(const float pxlX) const {
+double CoordSystem::ConvertXToMath(const double pxlX) const {
     return (pxlX - x0y0_.x_) / xyScale_.x_ + xyMin_.x_;
 }
 
-float CoordSystem::ConvertYToMath(const float pxlY) const {
+double CoordSystem::ConvertYToMath(const double pxlY) const {
     return xyMax_.y_ - (pxlY - x0y0_.y_) / xyScale_.y_;
 }
 
