@@ -12,18 +12,15 @@ bool Plane::IsAtPlane(const Vector3D& point) const {
         flag = 0;
     }
 
-    // std::cout << point << std::endl;
     for (uint32_t curLimit = 0; (curLimit < limitations_.GetRows()) && flag; curLimit++) {
         double subs = SubstituteAtPlane(point, limitations_, curLimit);
     
-        // std::cout << subs << std::endl;
-
         if (CmpDbl(limitations_.GetElem(curLimit, 4), 0)) {
-            if (subs > 0)
+            if ((subs > 0) && !CmpDbl(subs, 0))
                 flag = 0;
         }
         else {
-            if (subs < 0)
+            if ((subs < 0) && !CmpDbl(subs, 0))
                 flag = 0;
         }
     }
@@ -55,6 +52,9 @@ Ray Plane::Trace(const Ray& ray) const {
     double intersectionTime = - (plane_.GetElem(0, 0) * ray.point_.x_ + plane_.GetElem(0, 1) * ray.point_.y_  + plane_.GetElem(0, 2) * ray.point_.z_ + plane_.GetElem(0, 3)) 
                              /  (plane_.GetElem(0, 0) * ray.vector_.x_+ plane_.GetElem(0, 1) * ray.vector_.y_ + plane_.GetElem(0, 2) * ray.vector_.z_);
     assert(std::isfinite(intersectionTime));
+    if (!CmpDbl(intersectionTime, 0) && (intersectionTime < 0)) {
+        return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
+    }
 
     Vector3D intersectionPoint = {ray.vector_.x_ * intersectionTime + ray.point_.x_,
                                   ray.vector_.y_ * intersectionTime + ray.point_.y_,

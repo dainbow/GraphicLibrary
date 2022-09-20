@@ -18,8 +18,10 @@
 #include "Ray.hpp"
 #include "Plane.hpp"
 
-const float windowWidth  = 600;
-const float windowHeight = 600; 
+const uint32_t maxReflections = 3;
+
+const float windowWidth  = 1000;
+const float windowHeight = 1000; 
 
 const float virtualWidth  = 10;
 const float virtualHeight = 10;
@@ -31,5 +33,13 @@ const MyColor ambient = {float(0.01), float(0.01), float(0.01)};
 
 void PollEvent(Window& window);
 
-MyColor CalcColor(const Ray& ray, const BaseObject* object, const Vector3D camCoords, const LightSource* light);
+Ray FindClosestObject(BaseObject** objects, const uint32_t objectsAmount, const Ray& curRay, uint32_t* objectNumber = nullptr);
+
+double CalcLambert(const BaseObject* object, const Ray& ray, const Ray& lightRay);
+double CalcDiffuse(const BaseObject* object, const Ray& ray, const Ray& lightRay, const Vector3D& camCoords);
+
+MyColor CalcColor(LightSource** lights, const uint32_t lightsAmount, BaseObject** objects, const uint32_t objectsAmount,
+                  const Ray& leastRay, const uint32_t leastObject, const Vector3D& camCoords);
+
+
 
