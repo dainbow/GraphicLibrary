@@ -18,11 +18,8 @@ class Matrix {
         Matrix(const Matrix& cloneMatrix) : array_(nullptr) {
             rowsAmount_   = cloneMatrix.rowsAmount_;
             columnAmount_ = cloneMatrix.columnAmount_;
-            if (!rowsAmount_ && !columnAmount_) {
-                return;
-            }
 
-            array_        = new double*[cloneMatrix.GetRows()];
+            array_        = new double*[rowsAmount_];
             for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
                 array_[curRow] = new double[columnAmount_];
 
@@ -84,11 +81,20 @@ class Matrix {
         bool AddMuledRow(const uint32_t rowToAdd, const uint32_t rowFromAdd, const double& scalar);
 
         ~Matrix() {
+            if (!array_)
+                return;
+
+
             for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
-                delete[] array_[curRow];
+                if (array_[curRow])
+                    delete[] array_[curRow];
+
+                array_[curRow] = 0;
             }
 
-            delete[] array_;
+            if (array_)
+                delete[] array_;
+            array_ = 0;
         }  
 };
 

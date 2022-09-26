@@ -6,7 +6,6 @@ Matrix& Matrix::operator=(const Matrix& cloneMatrix) {
     }
 
     this->~Matrix();
-
     array_ = new double*[cloneMatrix.GetRows()];
 
     rowsAmount_   = cloneMatrix.rowsAmount_; 

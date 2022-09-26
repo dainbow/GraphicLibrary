@@ -30,25 +30,53 @@ Ray Sphere::Trace(const Ray& ray) const {
     }
 
     double t1 = (-b - sqrt(descriminant)) / (2 * a);
-    if (!CmpDbl(t1, 0) && (t1 < 0)) {
-        return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
-    }
+    double t2 = (-b + sqrt(descriminant)) / (2 * a);
 
     Ray tracedRay = {};
+    if (!CmpDbl(t1, 0) && (t1 < 0)) {
+        if (!CmpDbl(t2, 0) && (t2 < 0)) {
+            return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
+        }
 
-    tracedRay.point_  = (ray.vector_ * t1) + ray.point_;
+        tracedRay.point_  = (ray.vector_ * t2) + ray.point_;
+    }
+    else {
+        tracedRay.point_  = (ray.vector_ * t1) + ray.point_;
+    }
+
     tracedRay.vector_ = GetReflected(tracedRay.point_, ray); 
-    tracedRay.power_  = ray.power_ * powerDecrease_;
+    tracedRay.power_  = ray.power_ * reflectPowerDecrease_;
 
     return tracedRay;
 }   
+
+Vector3D Sphere::GetOutsideNormal(const Ray& ray) const {
+    return {ray.point_.x_ - center_.x_, ray.point_.y_ - center_.y_, ray.point_.z_ - center_.z_};
+}
 
 Vector3D Sphere::GetNormal(const Ray& ray) const {
     if (!IsOnSphere(ray.point_)) {
         return {NAN, NAN, NAN};
     }
 
-    Vector3D normal = {ray.point_.x_ - center_.x_, ray.point_.y_ - center_.y_, ray.point_.z_ - center_.z_};
+    Vector3D normal = {NAN, NAN, NAN};
+    if ((SubstituteAt(ray.point_) > 0) || CmpDbl(SubstituteAt(ray.point_), 0)) {
+        normal = {ray.point_.x_ - center_.x_, ray.point_.y_ - center_.y_, ray.point_.z_ - center_.z_};
+    }
+    else {
+        normal = {center_.x_ - ray.point_.x_, center_.y_ - ray.point_.y_, center_.z_ - ray.point_.z_};
+    }
 
     return normal;
+}
+
+double Sphere::GetDistance(const Vector3D& point) const {
+    Vector3D distance = point - center_;
+
+    return distance.Length();
+}
+
+double Sphere::SubstituteAt(const Vector3D& point) const {
+    return pow(point.x_ - center_.x_, 2) + pow(point.y_ - center_.y_, 2) + pow(point.z_ - center_.z_, 2) -
+           pow(radius_, 2); 
 }

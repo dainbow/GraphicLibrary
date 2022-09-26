@@ -1,10 +1,5 @@
 #include "Plane.hpp"
 
-Plane::~Plane() {
-    plane_.~Matrix();
-    limitations_.~Matrix();
-}
-
 bool Plane::IsAtPlane(const Vector3D& point) const {
     bool flag = 1;
 
@@ -28,6 +23,10 @@ bool Plane::IsAtPlane(const Vector3D& point) const {
     return flag;
 }
 
+Vector3D Plane::GetOutsideNormal([[maybe_unused]] const Ray& ray) const {
+    return {plane_.GetElem(0, 0), plane_.GetElem(0, 1), plane_.GetElem(0, 2)};
+}
+
 Vector3D Plane::GetNormal(const Ray& ray) const {
     Vector3D normal = {plane_.GetElem(0, 0), plane_.GetElem(0, 1), plane_.GetElem(0, 2)};
     
@@ -41,6 +40,11 @@ Vector3D Plane::GetNormal(const Ray& ray) const {
     return -normal;
 }
 
+double Plane::GetDistance(const Vector3D& point) const {
+    return 0;
+}
+
+
 Ray Plane::Trace(const Ray& ray) const {
     if ((plane_.GetColumns() != 4) || (plane_.GetRows() != 1)) {
         return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
@@ -51,7 +55,12 @@ Ray Plane::Trace(const Ray& ray) const {
 
     double intersectionTime = - (plane_.GetElem(0, 0) * ray.point_.x_ + plane_.GetElem(0, 1) * ray.point_.y_  + plane_.GetElem(0, 2) * ray.point_.z_ + plane_.GetElem(0, 3)) 
                              /  (plane_.GetElem(0, 0) * ray.vector_.x_+ plane_.GetElem(0, 1) * ray.vector_.y_ + plane_.GetElem(0, 2) * ray.vector_.z_);
-    assert(std::isfinite(intersectionTime));
+   
+    if (!std::isfinite(intersectionTime)) {
+        std::cout << ray.point_ << ray.vector_ << ray.power_ << std::endl;
+        abort();
+    }
+
     if (!CmpDbl(intersectionTime, 0) && (intersectionTime < 0)) {
         return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
     }
@@ -64,7 +73,7 @@ Ray Plane::Trace(const Ray& ray) const {
         return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
     }
 
-    Ray resultRay = {intersectionPoint, GetReflected(intersectionPoint, ray), ray.power_ * powerDecrease_};
+    Ray resultRay = {intersectionPoint, GetReflected(intersectionPoint, ray), ray.power_ * reflectPowerDecrease_};
     
     return resultRay;
 }

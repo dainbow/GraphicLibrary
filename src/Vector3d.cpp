@@ -20,6 +20,12 @@ void Vector3D::operator+=(const Vector3D& vectorToAdd) {
     z_ += vectorToAdd.z_;
 }
 
+void Vector3D::operator+=(const MyColor& colorToAdd) {
+    x_ += colorToAdd.fRed_;
+    y_ += colorToAdd.fGreen_;
+    z_ += colorToAdd.fBlue_;
+}
+
 void Vector3D::operator-=(const Vector3D& vectorToSub) {
     x_ -= vectorToSub.x_;
     y_ -= vectorToSub.y_;
@@ -51,6 +57,10 @@ Vector3D Vector3D::operator-() const {
     return (*this) * -1;
 }
 
+bool Vector3D::operator==(const Vector3D& vectorToCmp) const {
+    return (CmpDbl(vectorToCmp.x_, x_)) && (CmpDbl(vectorToCmp.y_, y_)) && (CmpDbl(vectorToCmp.z_, z_));
+}
+
 void Vector3D::Normalise() {
     *this *= double(1) / Length();
 }
@@ -69,6 +79,10 @@ double Vector3D::Length() const {
 
 double Vector3D::CosBetween(const Vector3D& vector2) const {
     return ((*this) * vector2) / (Length() * vector2.Length()); 
+}
+
+double Vector3D::SinBetween(const Vector3D& vector2) const {
+    return sqrt(1 - pow(CosBetween(vector2), 2));
 }
 
 std::ostream& operator<<(std::ostream& outStream, const Vector3D& curVector) {

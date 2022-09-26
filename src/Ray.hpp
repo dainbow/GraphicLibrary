@@ -8,7 +8,7 @@ class Ray {
         Vector3D point_;
         Vector3D vector_;
 
-        double power_;
+        double power_ = 1;
 
         bool IsNan() const {
             return point_.IsNan() && vector_.IsNan() && std::isnan(power_);

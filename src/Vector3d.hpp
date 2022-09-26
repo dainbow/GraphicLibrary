@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-
+#include "Color.hpp"
 #include "Utilities.hpp"
 
 class Vector3D {
@@ -13,13 +13,17 @@ class Vector3D {
         double z_;
 
         double CosBetween(const Vector3D& vector2) const;
+        double SinBetween(const Vector3D& vector2) const;
 
         double operator*(const Vector3D& vector2) const;
 
         void Resize(const double newLength);
 
         void operator *=(double scalar);
+
         void operator +=(const Vector3D& vectorToAdd);
+        void operator +=(const MyColor& colorToAdd);
+
         void operator -=(const Vector3D& vectorToSub);
 
         Vector3D operator*(double scalar) const;
@@ -27,6 +31,8 @@ class Vector3D {
         Vector3D operator-(const Vector3D& vectorToSub) const;
 
         Vector3D operator-() const;
+
+        bool operator==(const Vector3D& vectorToCmp) const;
 
         void Normalise();
         bool IsNan() const;
