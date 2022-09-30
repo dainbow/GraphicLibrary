@@ -9,7 +9,7 @@ bool Sphere::IsOnSphere(const Vector3D& point) const {
     return 1;
 }
 
-Ray Sphere::Trace(const Ray& ray) const {
+Ray Sphere::Trace(const Ray& ray, MyColor* colorAbsorbed) const {
     // (x - x0)^2 + (y - y0)^2 + (z - z0)^2 = R^2
     // x = lt + x1
     // y = mt + y1
@@ -43,11 +43,14 @@ Ray Sphere::Trace(const Ray& ray) const {
     else {
         tracedRay.point_  = (ray.vector_ * t1) + ray.point_;
     }
+    tracedRay.vector_ = -ray.vector_;
 
-    tracedRay.vector_ = GetReflected(tracedRay.point_, ray); 
-    tracedRay.power_  = ray.power_ * reflectPowerDecrease_;
+    HitInfo curInfo = {};
+    curInfo.hittedObject_ = this;
+    curInfo.normal_ = GetNormal(tracedRay);
+    curInfo.point_  = tracedRay.point_; 
 
-    return tracedRay;
+    return objectMaterial_->GetProcessedRay(ray, curInfo, colorAbsorbed);
 }   
 
 Vector3D Sphere::GetOutsideNormal(const Ray& ray) const {

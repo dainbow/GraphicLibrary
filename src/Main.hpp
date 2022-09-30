@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <thread>
 #include <iostream>
 #include <unistd.h>
@@ -23,12 +24,13 @@
 
 #include "Array.hpp"
 
+const double SuperSamplingCoef = 30.0;
 constexpr double threadsAmount = 16.0;
 const double LambertInterval   = M_PI / 256;
 
 const double LittleEpsilon = 3 * __FLT_EPSILON__;
 
-const uint32_t MaxRecursionDepth = 10;
+const uint32_t MaxRecursionDepth = 50;
 
 const float windowWidth  = 1000;
 const float windowHeight = 1000; 
@@ -49,13 +51,6 @@ void ProcessRow(MyColor* curRow, const double row, const Vector3D& cameraCoords,
 MyColor ProcessRay(const BaseObject** objects, const uint32_t objectsAmount,
                   const Ray& curRay, const Vector3D& camCoords, const uint32_t curDepth);
 
-Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, const Ray& curRay, uint32_t* objectNumber = nullptr);
-
-double CalcLambert(const Vector3D& normal, const Ray& lightRay);
-double CalcDiffuse(const BaseObject* object, const Ray& ray, const Ray& lightRay, const Vector3D& camCoords);
-
-MyColor CalcColor(const BaseObject** objects, const uint32_t objectsAmount,
-                  const Ray& leastRay, const uint32_t leastObject, const Vector3D& camCoords);
-
-
-
+Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, 
+                      const Ray& curRay, 
+                      MyColor* colorAbsorbed, uint32_t* objectNumber = nullptr);

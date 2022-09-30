@@ -14,3 +14,5 @@ class Ray {
             return point_.IsNan() && vector_.IsNan() && std::isnan(power_);
         }
 };
+
+std::ostream& operator<<(std::ostream& stream, const Ray& ray);

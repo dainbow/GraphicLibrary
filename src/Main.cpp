@@ -1,30 +1,32 @@
 #include "Main.hpp"
 
 int main() {
-    LightSource simpleLight;
-    simpleLight.lightColor_ = {0xffffff00};
-    simpleLight.intensivity_ = 3;
+    ConstColor red   = {{0.7, 0.3, 0.3}};
+    ConstColor green = {{0.8, 0.6, 0.2}};
+    ConstColor blue  = {{0.8, 0.8, 0.8}};
+    ConstColor white   = {0xffffff00};
+    ConstColor lazur   = {0x0b083f00};
+    ConstColor realRed = {0xff2b2b00};
+    ConstColor realGreen = {0x13880800};
+    ConstColor realBlack = {0x161a1e00};
+    ConstColor pink      = {0xFF149300};
 
-    Material glass = {};
-    glass.isTransparent_ = 1;
-    glass.materialRefractionCoef_ = 1.5;
-    glass.reflectibility_ = 3;
-    glass.reflectPowerDecrease_ = 0.15;
-    glass.refractPowerDecrease_ = 0.9;
+    DiffLight whiteLight = {&white};
 
-    Material mirror = {};
-    mirror.isTransparent_ = 0;
-    mirror.materialRefractionCoef_ = 0;
-    mirror.reflectibility_ = 3;
-    mirror.reflectPowerDecrease_ = 0.5;
-    mirror.refractPowerDecrease_ = 0.001;
+    Squares kvadratiki = {&white, &lazur, 3};
 
-    Material rubber = {};
-    rubber.isTransparent_ = 0;
-    rubber.materialRefractionCoef_ = 0;
-    rubber.reflectibility_ = 5;
-    rubber.reflectPowerDecrease_ = 0.1;
-    rubber.refractPowerDecrease_ = 0;
+    Mirror redMirror = {&red};
+    Mirror greenMirror = {&green};
+    Mirror blueMirror = {&blue};
+    Mirror pinkMirror = {&pink};
+
+    Scattering squareScat = {&kvadratiki};
+    Scattering whiteScat  = {&white};
+    Scattering redScat    = {&realRed};
+    Scattering greenScat  = {&realGreen};
+    Scattering blackScat  = {&realBlack};
+
+    Transparent glass(1.5);
 
     Window window(windowWidth, windowHeight);
     
@@ -34,49 +36,21 @@ int main() {
     curImage.Create(windowWidth, windowHeight, {0x00, 0x00, 0x00});
 
     // 0x10901000
-    Sphere sph1({5, 4, 35}, 2, 0x00000000, glass, simpleLight);
-    Sphere sph2({-10, 7, 50}, 5, 0xffd70000, mirror, simpleLight);
-    Sphere sph3({10, 7, 50}, 5, 0x9400d300, mirror, simpleLight);
+    Sphere sph1({-11, 13, 32}, 2, &redMirror);
+    Sphere sph2({-5, 9.9, 37}, 5, &greenMirror);
+    Sphere sph3({8, 9.9, 37}, 5, &glass);
+    Sphere sph5({5, 4.9, 60}, 10, &pinkMirror);
 
-    Sphere light1({0, 5, 100}, 3, 0xffffff00, mirror, simpleLight, 1);
-    Sphere light2({20, 0, 30}, 3, 0xffffff00, mirror, simpleLight, 1);
-    Sphere light3({-20, 0, 30}, 3, 0xffffff00, mirror, simpleLight, 1);
+    Sphere sph4({-5, -6.8, 45}, 5, &whiteLight);
 
-    Matrix plane1(1, 4);
-    plane1.SetElem(0, 0, 0);
-    plane1.SetElem(0, 1, -1);
-    plane1.SetElem(0, 2, 0);
-    plane1.SetElem(0, 3, 15);
+    Plane pln1 = GetXZPlane(&squareScat, 15, -15, 15, 10, 60);
+    Plane pln2 = GetXYPlane(&whiteScat, 60, -15, 15);
+    Plane pln3 = GetZYPlane(&redScat, -15, 10, 60);
+    Plane pln4 = GetZYPlane(&greenScat, 15, 10, 60);
+    Plane pln6 = GetXZPlane(&squareScat, -12, -15, 15, 10, 60);
 
-    Matrix limits(4, 5);
-    limits.SetElem(0, 0, 1);
-    limits.SetElem(0, 1, 0);
-    limits.SetElem(0, 2, 0);
-    limits.SetElem(0, 3, -25);
-    limits.SetElem(0, 4, 0);
-
-    limits.SetElem(1, 0, 1);
-    limits.SetElem(1, 1, 0);
-    limits.SetElem(1, 2, 0);
-    limits.SetElem(1, 3, 25);
-    limits.SetElem(1, 4, 1);
-
-    limits.SetElem(2, 0, 0);
-    limits.SetElem(2, 1, 0);
-    limits.SetElem(2, 2, 1);
-    limits.SetElem(2, 3, -160);
-    limits.SetElem(2, 4, 0);
-
-    limits.SetElem(3, 0, 0);
-    limits.SetElem(3, 1, 0);
-    limits.SetElem(3, 2, 1);
-    limits.SetElem(3, 3, -30);
-    limits.SetElem(3, 4, 1);
-
-    Plane pln1(plane1, limits, 0x50c878, rubber, simpleLight);
-
-    const uint32_t objectsAmount = 7;
-    BaseObject* objects[objectsAmount]  = {&pln1, &sph1, &sph2, &sph3, &light1, &light2, &light3};
+    const uint32_t objectsAmount = 10;
+    BaseObject* objects[objectsAmount]  = {&pln1, &pln2, &pln3, &pln4, &pln6, &sph1, &sph2, &sph3, &sph4, &sph5};
 
     std::array<std::thread, uint64_t(threadsAmount)> threads;
 
@@ -100,110 +74,93 @@ int main() {
             for (double curThread = 0; (curThread < threadsAmount) && ((curY + curThread) < (windowHeight / 2)); curThread++) {
                 threads[uint32_t(curThread)].join();
             }
-        }
 
-        for (double curY = -(windowHeight / 2); curY < (windowHeight / 2); curY++) {
-            for (double curX = -(windowWidth / 2); curX < (windowWidth / 2); curX++) {
-                curImage.SetPixel(uint32_t(curX + (windowWidth / 2)), uint32_t(curY + (windowHeight / 2)), rawData[uint32_t(curY + (windowHeight / 2))][uint32_t(curX + (windowWidth / 2))]);
+            for (double curRenderY = curY; (curRenderY < (curY + threadsAmount)) && (curRenderY < (windowHeight / 2)); curRenderY++) {
+                for (double curX = -(windowWidth / 2); curX < (windowWidth / 2); curX++) {
+                    MyColor newColor = rawData[uint32_t(curRenderY + (windowHeight / 2))][uint32_t(curX + (windowWidth / 2))];
+                    MyColor gammaColor = {sqrt(newColor.fRed_),
+                                          sqrt(newColor.fGreen_),
+                                          sqrt(newColor.fBlue_)};
+
+
+                    curImage.SetPixel(uint32_t(curX + (windowWidth / 2)), uint32_t(curRenderY + (windowHeight / 2)), gammaColor);
+                }
             }
+
+            window.DrawImage(curImage, {0, 0});
+            window.Display();
         }
-
-        window.DrawImage(curImage, {0, 0});
-        window.Display();
     }
-
-    std::cout << "GOING OUT " << std::endl;
 }
 
 void ProcessRow(MyColor* curRow, const double row, const Vector3D& cameraCoords,
                 void* objectsVoid, const uint32_t objectsAmount) {
     const BaseObject** objects = const_cast<const BaseObject**>(reinterpret_cast<BaseObject**>(objectsVoid));
-    const double convertedY = row * (virtualHeight  / windowHeight);
-
     for (double curX = -(windowWidth / 2); curX < (windowWidth / 2); curX++) {
-        const double convertedX = curX * (virtualWidth / windowWidth);
+        Vector3D sumColor = {0, 0, 0};
+        for (uint32_t curSample = 0; curSample < uint32_t(SuperSamplingCoef); curSample++) {
+            const double convertedY = (row  + GetRandomDouble()) * (virtualHeight  / windowHeight);
+            const double convertedX = (curX + GetRandomDouble()) * (virtualWidth / windowWidth);
 
-        const Vector3D virtualPoint = {convertedX, convertedY, displayDistance};
+            const Vector3D virtualPoint = {convertedX, convertedY, displayDistance};
 
-        Ray curRay = {cameraCoords, virtualPoint - cameraCoords, 1.2};
-        curRay.vector_.Normalise();
+            Ray curRay = {cameraCoords, virtualPoint - cameraCoords, 1.2};
+            curRay.vector_.Normalise();
 
-        MyColor newColor = ProcessRay(objects, objectsAmount, curRay, cameraCoords, 0);
-
-        curRow[uint32_t(curX + (windowWidth / 2))] = newColor;
+            sumColor += Vector3D(ProcessRay(objects, objectsAmount, curRay, cameraCoords, 0));
+        } 
+        sumColor *= (1.0 / SuperSamplingCoef);
+        
+        curRow[uint32_t(curX + (windowWidth / 2))] = MyColor(sumColor.x_, sumColor.y_, sumColor.z_);
     }
 }
 
 MyColor ProcessRay(const BaseObject** objects, const uint32_t objectsAmount,
                    const Ray& curRay, const Vector3D& camCoords,
                    const uint32_t curDepth) {
+    if (curDepth == MaxRecursionDepth)
+        return 0;               
+
+    MyColor colorAbsorbed = 0;
+
     uint32_t leastObject = UINT32_MAX;
-
-    Ray reflectedRay = FindClosestObject(objects, objectsAmount, curRay, &leastObject);
-
-    if (reflectedRay.IsNan()) {
-        return 0x00000000;
-    }
-
-    if (objects[leastObject]->isLight_) {
-        if (curDepth == 0) {
-            return 0xffffff00;
-        }
-
-        return 0;
-    }
-
-    reflectedRay.vector_.Normalise();
-
-    MyColor newColor = 0;
-    newColor += CalcColor(objects, objectsAmount, reflectedRay, leastObject, camCoords);   
+    Ray processedRay = FindClosestObject(objects, objectsAmount, curRay, &colorAbsorbed, &leastObject);
     
-    if ((curDepth + 1) < MaxRecursionDepth) {
-        if (objects[leastObject]->isTransparent_) {
-            Ray refractedRay = objects[leastObject]->GetRefracted({reflectedRay.point_, curRay.vector_});
+    if (leastObject == UINT32_MAX) {
+        double convertedY = 0.5 * (Normalise(curRay.vector_).y_ + 1.0);
 
-            if (!refractedRay.IsNan()) {
-                refractedRay.vector_.Normalise();
-                refractedRay.point_ += refractedRay.vector_ * LittleEpsilon;
-
-                Vector3D saveVector = refractedRay.vector_;
-                double savePower = refractedRay.power_;
-
-                refractedRay = FindClosestObject(objects, objectsAmount, refractedRay, &leastObject);
-
-                refractedRay.power_ = savePower;
-                refractedRay.vector_ = saveVector;
-
-                refractedRay = objects[leastObject]->GetRefracted(refractedRay);
-                refractedRay.point_ += refractedRay.vector_ * LittleEpsilon;
-                
-                if (!refractedRay.IsNan()) {
-                    MyColor colorDiff = ProcessRay(objects, objectsAmount, refractedRay, camCoords, curDepth + 1);
-
-                    newColor += colorDiff;
-                }
-            }
-        }
-
-        reflectedRay.point_ += reflectedRay.vector_ * LittleEpsilon;
-        newColor += ProcessRay(objects, objectsAmount, reflectedRay, camCoords, curDepth + 1);
+        // return 0;
+        return MyColor(1.0, 1.0, 1.0) * (1.0 - convertedY) + MyColor(0.5, 0.7, 1.0) * convertedY;
     }
 
-    return newColor;
+    MyColor emitted = objects[leastObject]->objectMaterial_->GetEmitted(processedRay.point_);
+    if (processedRay.vector_.IsNan()) {
+        return emitted;
+    }
+
+    processedRay.vector_.Normalise();
+    processedRay.point_ += processedRay.vector_ * LittleEpsilon;
+   
+    MyColor newColor = ProcessRay(objects, objectsAmount, processedRay, camCoords, curDepth + 1);
+
+    return emitted + colorAbsorbed * newColor;
 }
 
-Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, const Ray& curRay, uint32_t* objectNumber) {
+Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, const Ray& curRay, MyColor* colorAbsorbed, uint32_t* objectNumber) {
     Ray leastRay = {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
 
     double leastDistance   = __DBL_MAX__;
     uint32_t leastObject   = UINT32_MAX;
+    MyColor leastColor     = 0;
 
     for (uint32_t curObject = 0; curObject < objectsAmount; curObject++) {
-        Ray newRay = objects[curObject]->Trace(curRay);
+        Ray newRay = objects[curObject]->Trace(curRay, colorAbsorbed);
         Vector3D curDistance = curRay.point_ - newRay.point_;
 
         if (!newRay.IsNan() && (leastRay.IsNan() || (curDistance.LengthSquared() < leastDistance))) {
             leastRay = newRay;
+
+            leastColor = *colorAbsorbed;
 
             leastDistance = curDistance.LengthSquared();
             leastObject   = curObject;
@@ -213,54 +170,8 @@ Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, 
     if (objectNumber)
         *objectNumber = leastObject;
 
+    *colorAbsorbed = leastColor;
     return leastRay;
-}
-
-MyColor CalcColor(const BaseObject** objects, const uint32_t objectsAmount,
-                  const Ray& leastRay, const uint32_t leastObject,
-                  const Vector3D& camCoords) {
-    MyColor newColor = 0;
-
-    Vector3D normal = objects[leastObject]->GetNormal(leastRay);
-
-    for (uint32_t curObject = 0; curObject < objectsAmount; curObject++) {
-        if (!objects[curObject]->isLight_) {
-            continue;
-        }
-
-        Ray lightRay = {leastRay.point_, -objects[curObject]->GetOutsideNormal(leastRay)};
-        lightRay.vector_.Normalise();
-        lightRay.point_ += lightRay.vector_ * LittleEpsilon; 
-
-        uint32_t leastShadowObject = UINT32_MAX;
-        Ray shadowRay = FindClosestObject(objects, objectsAmount, lightRay, &leastShadowObject);
-
-        if (!shadowRay.IsNan() && (leastShadowObject == curObject)) {
-            newColor += (objects[leastShadowObject]->lightColor_ * objects[leastObject]->color_ * CalcLambert(normal, lightRay) +
-                         objects[leastShadowObject]->lightColor_ * CalcDiffuse(objects[leastObject], leastRay, lightRay, camCoords)) *
-                        (leastRay.power_ * objects[leastShadowObject]->intensivity_ / (objects[leastObject]->reflectPowerDecrease_ * sqrt(objects[leastShadowObject]->GetDistance(leastRay.point_))));
-        }
-    }
-
-    return newColor;
-}
-
-double CalcDiffuse(const BaseObject* object, const Ray& ray, const Ray& lightRay, const Vector3D& camCoords) {
-    Ray reflectedLightRay = {ray.point_, object->GetReflected(ray.point_, {lightRay.point_, -lightRay.vector_})};
-
-    double cosBeta = reflectedLightRay.vector_.CosBetween(camCoords - ray.point_);
-    if (cosBeta < 0) 
-        cosBeta = 0;
-
-    return pow(cosBeta, object->reflectibility_);
-}
-
-double CalcLambert(const Vector3D& normal, const Ray& lightRay) {
-    double cosAlpha = normal.CosBetween(lightRay.vector_);
-    if (cosAlpha < 0)
-        cosAlpha = 0;
-        
-    return cosAlpha;
 }
 
 bool PollEvent(Window& window) {

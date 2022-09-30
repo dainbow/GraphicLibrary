@@ -69,6 +69,10 @@ bool Vector3D::IsNan() const {
     return std::isnan(x_) && std::isnan(y_) && std::isnan(z_);
 }
 
+bool Vector3D::IsZero() const {
+    return CmpDbl(x_, 0) && CmpDbl(y_, 0) && CmpDbl(z_, 0);
+}
+
 double Vector3D::LengthSquared() const {
     return (*this) * (*this);
 }
@@ -89,4 +93,20 @@ std::ostream& operator<<(std::ostream& outStream, const Vector3D& curVector) {
     outStream << "(" << curVector.x_ << " : " << curVector.y_ << " : " << curVector.z_ << ")";
 
     return outStream;
+}
+
+Vector3D Normalise(const Vector3D& curVector) {
+    Vector3D result = curVector;
+    result.Normalise();
+
+    return result;
+}
+
+Vector3D RandomNormalVector() {
+    Vector3D result = {GetRandomDouble(-1, 1), 
+                       GetRandomDouble(-1, 1), 
+                       GetRandomDouble(-1, 1)};
+    result.Normalise();
+
+    return result;
 }

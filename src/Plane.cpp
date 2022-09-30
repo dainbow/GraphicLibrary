@@ -33,6 +33,8 @@ Vector3D Plane::GetNormal(const Ray& ray) const {
     Vector3D point1 = ray.point_ + ray.vector_;
     Vector3D point2 = ray.point_ + normal;
 
+    // std::cout << ray.point_ << " " << normal << std::endl;
+
     if ((SubstituteAtPlane(point1, plane_, 0) * SubstituteAtPlane(point2, plane_, 0)) >= 0) {
         return normal;
     }
@@ -40,12 +42,12 @@ Vector3D Plane::GetNormal(const Ray& ray) const {
     return -normal;
 }
 
-double Plane::GetDistance(const Vector3D& point) const {
+double Plane::GetDistance([[maybe_unused]] const Vector3D& point) const {
     return 0;
 }
 
 
-Ray Plane::Trace(const Ray& ray) const {
+Ray Plane::Trace(const Ray& ray, MyColor* absorbedColor) const {
     if ((plane_.GetColumns() != 4) || (plane_.GetRows() != 1)) {
         return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
     }
@@ -73,9 +75,12 @@ Ray Plane::Trace(const Ray& ray) const {
         return {{NAN, NAN, NAN}, {NAN, NAN, NAN}, NAN};
     }
 
-    Ray resultRay = {intersectionPoint, GetReflected(intersectionPoint, ray), ray.power_ * reflectPowerDecrease_};
-    
-    return resultRay;
+    HitInfo curInfo = {};
+    curInfo.hittedObject_ = this;
+    curInfo.normal_ = GetNormal({intersectionPoint, -ray.vector_});
+    curInfo.point_ = intersectionPoint;
+
+    return objectMaterial_->GetProcessedRay(ray, curInfo, absorbedColor);
 }
 
 double SubstituteAtPlane(const Vector3D& point, const Matrix& plane, const uint32_t row) {
@@ -85,3 +90,109 @@ double SubstituteAtPlane(const Vector3D& point, const Matrix& plane, const uint3
 
     return point.x_ * plane.GetElem(row, 0) + point.y_ * plane.GetElem(row, 1) + point.z_ * plane.GetElem(row, 2) + plane.GetElem(row, 3);
 }
+
+Plane GetXZPlane(const Material* material, const double y, const double xMin, const double xMax, const double zMin, const double zMax) {
+    Matrix plane1(1, 4);
+    plane1.SetElem(0, 0, 0);
+    plane1.SetElem(0, 1, 1);
+    plane1.SetElem(0, 2, 0);
+    plane1.SetElem(0, 3, -y);
+
+    Matrix limits(4, 5);
+    limits.SetElem(0, 0, 1);
+    limits.SetElem(0, 1, 0);
+    limits.SetElem(0, 2, 0);
+    limits.SetElem(0, 3, -xMax);
+    limits.SetElem(0, 4, 0);
+
+    limits.SetElem(1, 0, 1);
+    limits.SetElem(1, 1, 0);
+    limits.SetElem(1, 2, 0);
+    limits.SetElem(1, 3, -xMin);
+    limits.SetElem(1, 4, 1);
+
+    limits.SetElem(2, 0, 0);
+    limits.SetElem(2, 1, 0);
+    limits.SetElem(2, 2, 1);
+    limits.SetElem(2, 3, -zMax);
+    limits.SetElem(2, 4, 0);
+
+    limits.SetElem(3, 0, 0);
+    limits.SetElem(3, 1, 0);
+    limits.SetElem(3, 2, 1);
+    limits.SetElem(3, 3, -zMin);
+    limits.SetElem(3, 4, 1);
+
+    return Plane(plane1, limits, material);
+}
+
+Plane GetXYPlane(const Material* material, const double z, const double xMin, const double xMax, const double yMin, const double yMax) {
+    Matrix plane1(1, 4);
+    plane1.SetElem(0, 0, 0);
+    plane1.SetElem(0, 1, 0);
+    plane1.SetElem(0, 2, 1);
+    plane1.SetElem(0, 3, -z);
+
+    Matrix limits(4, 5);
+    limits.SetElem(0, 0, 1);
+    limits.SetElem(0, 1, 0);
+    limits.SetElem(0, 2, 0);
+    limits.SetElem(0, 3, -xMax);
+    limits.SetElem(0, 4, 0);
+
+    limits.SetElem(1, 0, 1);
+    limits.SetElem(1, 1, 0);
+    limits.SetElem(1, 2, 0);
+    limits.SetElem(1, 3, -xMin);
+    limits.SetElem(1, 4, 1);
+
+    limits.SetElem(2, 0, 0);
+    limits.SetElem(2, 1, 1);
+    limits.SetElem(2, 2, 0);
+    limits.SetElem(2, 3, -yMax);
+    limits.SetElem(2, 4, 0);
+
+    limits.SetElem(3, 0, 0);
+    limits.SetElem(3, 1, 1);
+    limits.SetElem(3, 2, 0);
+    limits.SetElem(3, 3, -yMin);
+    limits.SetElem(3, 4, 1);
+
+    return Plane(plane1, limits, material);
+}
+
+Plane GetZYPlane(const Material* material, const double x, const double zMin, const double zMax, const double yMin, const double yMax) {
+    Matrix plane1(1, 4);
+    plane1.SetElem(0, 0, 1);
+    plane1.SetElem(0, 1, 0);
+    plane1.SetElem(0, 2, 0);
+    plane1.SetElem(0, 3, -x);
+
+    Matrix limits(4, 5);
+    limits.SetElem(0, 0, 0);
+    limits.SetElem(0, 1, 0);
+    limits.SetElem(0, 2, 1);
+    limits.SetElem(0, 3, -zMax);
+    limits.SetElem(0, 4, 0);
+
+    limits.SetElem(1, 0, 0);
+    limits.SetElem(1, 1, 0);
+    limits.SetElem(1, 2, 1);
+    limits.SetElem(1, 3, -zMin);
+    limits.SetElem(1, 4, 1);
+
+    limits.SetElem(2, 0, 0);
+    limits.SetElem(2, 1, 1);
+    limits.SetElem(2, 2, 0);
+    limits.SetElem(2, 3, -yMax);
+    limits.SetElem(2, 4, 0);
+
+    limits.SetElem(3, 0, 0);
+    limits.SetElem(3, 1, 1);
+    limits.SetElem(3, 2, 0);
+    limits.SetElem(3, 3, -yMin);
+    limits.SetElem(3, 4, 1);
+
+    return Plane(plane1, limits, material);
+}
+

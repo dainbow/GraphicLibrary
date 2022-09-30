@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstdint>
+#include <cmath>
 
 class MyColor {
     public:
@@ -21,8 +22,17 @@ class MyColor {
         fRed_(double(red_) / double(0xFF)), fGreen_(double(green_) / double(0xFF)), fBlue_(double(blue_) / double(0xFF)) {}
 
         MyColor(double red, double green, double blue) :
-        red_(uint8_t(red * double(0xFF))), green_(uint8_t(green * double(0xFF))), blue_(uint8_t(blue * double(0xFF))),
-        fRed_(red), fGreen_(green), fBlue_(blue) {}
+        red_(0), green_(0), blue_(0),
+        fRed_(0), fGreen_(0), fBlue_(0) 
+        {
+            fRed_   = (fabs(red)   > 1) ? 1 : red;
+            fGreen_ = (fabs(green) > 1) ? 1 : green; 
+            fBlue_  = (fabs(blue)  > 1) ? 1 : blue;
+
+            red_   = uint8_t(red   * double(0xFF));
+            green_ = uint8_t(green * double(0xFF));
+            blue_  = uint8_t(blue  * double(0xFF));
+        }
 
         void ClampFloats() {
             fRed_   = double(red_) / 0xff;
