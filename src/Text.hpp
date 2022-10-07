@@ -1,24 +1,12 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
-#include <cassert>
+// #include "Widget.hpp"
 
-#include "Rectangle.hpp"
-#include "Color.hpp"
+// class Text : public Widget {
+//     private:
+//         sf::String realText_;
 
-const float textCoef = float(3) / float(4);
+//     public:
 
-class Window;
+// };
 
-class Text {
-        friend Window;
-    private:
-        sf::Text realText_;
-        sf::String fontPath_ = "./fonts/arial.ttf";
-    public:
-        sf::String textString_;
-        Rectangle position_;
-
-        Text();
-        Text(const sf::String& string, const Rectangle& textRectangle, const MyColor& textColor = {});
-};

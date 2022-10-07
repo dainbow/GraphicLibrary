@@ -6,6 +6,14 @@
 #include <cassert>
 
 namespace Data {
+    template <class T>
+    void Destroy(T& elem) {
+        elem.~T();
+    }
+
+    template <int>
+    void Destroy(int& elem) {}
+
     template <class T, uint64_t tSize>
     class Array {
         T data_[tSize];
@@ -76,7 +84,7 @@ namespace Data {
 
             ~Array() {
                 for (uint64_t curIdx = 0; curIdx < tSize; curIdx++) {
-                    data_[curIdx] = 0;
+                    Destroy(data_[curIdx]);
                 }
             }
     };
@@ -92,8 +100,8 @@ namespace Data {
         uint64_t capacity_;
 
         public:
-            Vector(uint64_t size) :
-                data_(0),
+            Vector(const uint64_t size) :
+                data_(nullptr),
                 size_(size), 
                 capacity_(DefaultCapacityMultiplier)
                 {
@@ -101,8 +109,18 @@ namespace Data {
                     capacity_ *= DefaultCapacityMultiplier;
                 }
 
-                data_     = new char[capacity_ * sizeof(T)];
+                try {
+                    data_     = new char[capacity_ * sizeof(T)];
+                }
+                catch (std::bad_alloc& badAlloc) {
+                    std::cerr << "Can't alloc memory for vector" << std::endl;
 
+                    size_     = 0;
+                    capacity_ = 0;
+
+                    throw std::bad_alloc();
+                }
+                
                 for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {
                     uint64_t curTranslatedIdx = curIdx * sizeof(T);
 
@@ -123,7 +141,9 @@ namespace Data {
             }
 
             T& operator[](const uint64_t idx) {
-                assert(idx < size_);
+                if (idx >= size_) {
+                    throw std::range_error("Invalid index for vector");
+                }
 
                 uint64_t curTranslatedIdx = idx * sizeof(T);
                 return *((T*)(data_ + curTranslatedIdx));
@@ -133,7 +153,7 @@ namespace Data {
             bool Resize(uint64_t size) {
                 if (size <= size_) {
                     for (uint64_t curIdx = size; curIdx < size_; curIdx++) {
-                        (*this)[curIdx] = 0;
+                        Destroy((*this)[curIdx]);
                     }
 
                     size_ = size;
@@ -156,15 +176,20 @@ namespace Data {
                     newCapacity *= DefaultCapacityMultiplier;
                 }
 
-                char* newPtr = new char[newCapacity * sizeof(T)]();
-                if (!newPtr) {
-                    return 1;
+                char* newPtr = nullptr;
+                try {
+                    newPtr = new char[newCapacity * sizeof(T)]();
                 }
+                catch (std::bad_alloc) {
+                    std::cerr << "Can't alloc memory to increase vector" << std::endl;
 
+                    throw std::bad_alloc();
+                }
+                
                 for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {
                     uint64_t curTranslatedIdx = curIdx * sizeof(T);
 
-                    *((T*)(newPtr + curTranslatedIdx)) = (*this)[curIdx];
+                    new (newPtr + curTranslatedIdx) T((*this)[curIdx]);
                 }
 
                 for (uint64_t curIdx = size_; curIdx < size; curIdx++) {
@@ -183,7 +208,12 @@ namespace Data {
             }
 
             bool PushBack(const T& elem) {
-                if (Resize(size_ + 1)) {
+                try {
+                    Resize(size_ + 1);
+                }
+                catch (std::bad_alloc& badAlloc) {
+                    std::cerr << "Can't pushBack " << elem << " due to lack of memory" << std::endl;
+
                     return 1;
                 }
                 
@@ -198,7 +228,7 @@ namespace Data {
                 for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {
                     uint64_t convertedIdx = curIdx * sizeof(T);
 
-                    (*this)[curIdx] = *((T*)(vector.data_ + convertedIdx));
+                    (*this)[curIdx] = vector[curIdx];
                 }
 
                 return *this;
@@ -212,17 +242,17 @@ namespace Data {
                 for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {
                     uint64_t convertedIdx = curIdx * sizeof(T); 
 
-                    new (data_ + convertedIdx) T(*((T*)(vector.data_ + curIdx)));
+                    new (data_ + convertedIdx) T(vector[curIdx]);
                 }
-
-                (*this) = vector;
             }
 
             void* operator new(uint64_t size) {
                 std::cout << "Operator new for Data::Vector class" << std::endl;
 
                 void* newPtr = calloc(size, 1);
-                assert(newPtr && "CAN'T ALLOCATE MEMORY FOR DATA::VECTOR CLASS");
+                if (!newPtr) {
+                    throw std::bad_alloc();
+                }
 
                 return newPtr;
             }
@@ -231,7 +261,9 @@ namespace Data {
                 std::cout << "Operator new[] for Data::Vector class" << std::endl;
 
                 void* newPtr = calloc(size, 1);
-                assert(newPtr && "CAN'T ALLOCATE MEMORY FOR VECTOR CLASS");
+                if (!newPtr) {
+                    throw std::bad_alloc();
+                }
 
                 return newPtr;
             }
@@ -249,8 +281,8 @@ namespace Data {
             }
 
             ~Vector() {
-                for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {
-                    (*this)[curIdx] = 0;
+                for (uint64_t curIdx = 0; curIdx < GetSize(); curIdx++) {
+                    Destroy((*this)[curIdx]);
                 }
             }
     };
@@ -272,6 +304,6 @@ namespace Data {
 
         return stream;
     }
-
 };
+
 

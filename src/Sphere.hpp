@@ -4,7 +4,7 @@
 #include "Ray.hpp"
 #include "Vector3d.hpp"
 
-class Sphere : public BaseObject {
+class Sphere final : public BaseObject {
     public:
         Vector3D center_ = {NAN, NAN, NAN};
         double radius_ = NAN;

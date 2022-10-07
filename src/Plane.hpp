@@ -4,7 +4,7 @@
 #include "BaseObject.hpp"
 #include "Matrix.hpp"
 
-class Plane : public BaseObject {
+class Plane final : public BaseObject {
     public:
         Matrix plane_;
         Matrix limitations_;

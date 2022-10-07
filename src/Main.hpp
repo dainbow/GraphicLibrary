@@ -7,50 +7,29 @@
 
 #include <array>
 
-#include "Vector.hpp"
-#include "CoordSystem.hpp"
+#include "Widget.hpp"
 #include "Window.hpp"
-#include "Vector3d.hpp"
-#include "Image.hpp"
-
-#include "BaseObject.hpp"
-#include "Matrix.hpp"
-#include "Sphere.hpp"
+#include "Button.hpp"
 
 #include "LightSource.hpp"
 
 #include "Ray.hpp"
 #include "Plane.hpp"
 
-#include "Array.hpp"
+#include "Raytracer.hpp"
 
-const double SuperSamplingCoef = 30.0;
-constexpr double threadsAmount = 16.0;
-const double LambertInterval   = M_PI / 256;
+class ControlGraphics {
+    public:
+        Raytracer* tracer_;
 
-const double LittleEpsilon = 3 * __FLT_EPSILON__;
+        CustomButton<ControlGraphics>* lowButton_;
+        CustomButton<ControlGraphics>* midButton_;
+        CustomButton<ControlGraphics>* highButton_;
 
-const uint32_t MaxRecursionDepth = 50;
+        ControlGraphics(const ControlGraphics& graphics)            = default;
+        ControlGraphics& operator=(const ControlGraphics& graphics) = default;
+};
 
-const float windowWidth  = 1000;
-const float windowHeight = 1000; 
-
-const float virtualWidth  = 10;
-const float virtualHeight = 10;
-
-const float displayDistance = 10;
-
-const float specularN       = 3;
-const MyColor ambient = {float(0.01), float(0.01), float(0.01)};
-
-bool PollEvent(Window& window);
-
-void ProcessRow(MyColor* curRow, const double row, const Vector3D& cameraCoords, 
-                void* objectsVoid, const uint32_t objectsAmount);
-
-MyColor ProcessRay(const BaseObject** objects, const uint32_t objectsAmount,
-                  const Ray& curRay, const Vector3D& camCoords, const uint32_t curDepth);
-
-Ray FindClosestObject(const BaseObject** objects, const uint32_t objectsAmount, 
-                      const Ray& curRay, 
-                      MyColor* colorAbsorbed, uint32_t* objectNumber = nullptr);
+void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
+void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
+void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
