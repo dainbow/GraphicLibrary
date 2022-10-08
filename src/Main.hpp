@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <array>
+#include <string>
 
 #include "Widget.hpp"
 #include "Window.hpp"
@@ -15,7 +16,6 @@
 
 #include "Ray.hpp"
 #include "Plane.hpp"
-
 #include "Raytracer.hpp"
 
 class ControlGraphics {
@@ -33,3 +33,4 @@ class ControlGraphics {
 void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
 void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
 void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
+void AddButtonToList(CustomButton<List>* button, const Vector& vec);

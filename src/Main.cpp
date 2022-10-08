@@ -3,8 +3,16 @@
 int main() {
     RealWindow mainWindow(1000, 500, 0x8a7f8e00);
 
+    //
+    // TRACER INIT
+    //
+
     Raytracer* tracer = new Raytracer(20, 20, 460, 460, 1, 4, {0, 0, 0}, 10, 10, 10);
     mainWindow += tracer;
+
+    //
+    // GRAPHICS DROPLIST CONFIG
+    //
 
     DropList* graphicsButton = new DropList(0, 0, 70, 30, 0, 0, 0x00FF0000);
     graphicsButton->SetText("Tools", 0xfefe2200);
@@ -12,15 +20,45 @@ int main() {
 
     ControlGraphics control = {tracer, nullptr, nullptr, nullptr};
     
+    //
+    // TRACER OBJECTLIST CONFIG
+    //
+
+    List* objectsList = new List(520, 20, 300, 460, 0xffa8af00, 0x1e90ff00);
+    mainWindow += objectsList;
+
+    Button* sampleButton = new Button(0, 0, 200, 50, 0, 0, 0xFFFFFF00);
+    *objectsList += sampleButton;
+
+    //
+    // ButtonToAddObjects CONFIG
+    //
+
+    CustomButton<List>* buttonToAddObjects = new CustomButton<List>(840, 20, 30, 30, 0, 0, 0xffff0000, objectsList);
+    buttonToAddObjects->onClick_ += new FuncCaller<CustomButton<List>, Vector>(buttonToAddObjects, AddButtonToList);
+    mainWindow += buttonToAddObjects;
+
+    //
+    // LOW GRAPHICS BUTTON CONFIG
+    //
+
     CustomButton<ControlGraphics>* lowGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0x99FF9900, &control);
     lowGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(lowGraphics, LowGraphicsOnClick);
     lowGraphics->SetText("Low", 0xfefe2200);
     *graphicsButton += lowGraphics;
 
+    //
+    // MID GRAPHICS BUTTON CONFIG
+    //
+
     CustomButton<ControlGraphics>* midGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0xFFA81200, &control);
     midGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(midGraphics, MidGraphicsOnClick);
     midGraphics->SetText("Middle", 0xfefe2200);
     *graphicsButton += midGraphics;
+
+    //
+    // HIGH GRAPHICS BUTTON CONFIG
+    //
 
     CustomButton<ControlGraphics>* highGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0xff2b2b00, &control);
     highGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(highGraphics, HighGraphicsOnClick);
@@ -28,6 +66,10 @@ int main() {
     *graphicsButton += highGraphics;
 
     control = {tracer, lowGraphics, midGraphics, highGraphics};
+
+    //
+    // TRACER CONFIG
+    //
 
     ConstColor red   = {{0.7, 0.3, 0.3}};
     ConstColor green = {{0.8, 0.6, 0.2}};
@@ -178,9 +220,9 @@ void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec
 
     button->GetContext()->tracer_->SetLowGraphics();
 
-    button->SetPressed(1);
-    button->GetContext()->midButton_->SetPressed(0);
-    button->GetContext()->highButton_->SetPressed(0);
+    button->isClicked_ = 1;
+    button->GetContext()->midButton_->isClicked_  = 0;
+    button->GetContext()->highButton_->isClicked_ = 0;
 }
 
 void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec) {
@@ -194,9 +236,9 @@ void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec
 
     button->GetContext()->tracer_->SetMidGraphics();
 
-    button->SetPressed(1);
-    button->GetContext()->lowButton_->SetPressed(0);
-    button->GetContext()->highButton_->SetPressed(0);
+    button->isClicked_ = 1;
+    button->GetContext()->lowButton_->isClicked_  = 0;
+    button->GetContext()->highButton_->isClicked_ = 0;
 }
 
 void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec) {
@@ -210,7 +252,24 @@ void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& ve
 
     button->GetContext()->tracer_->SetHighGraphics();
 
-    button->SetPressed(1);
-    button->GetContext()->lowButton_->SetPressed(0);
-    button->GetContext()->midButton_->SetPressed(0);
+    button->isClicked_ = 1;
+    button->GetContext()->lowButton_->isClicked_ = 0;
+    button->GetContext()->midButton_->isClicked_ = 0;
+}
+
+uint32_t iter = 0;
+
+void AddButtonToList(CustomButton<List>* button, const Vector& vec) {
+    if (!button->IsClicked(vec))
+        return;
+
+    Button* newBut = new Button(0, 0, 200, 50, 0, 0, 0xffffff00); 
+
+    char buf[11] = "";
+    snprintf(buf, 11, "%u", iter++);
+    std::string newText  = buf;
+
+    newBut->SetText(newText, 0xffffff00);
+
+    *button->GetContext() += newBut;
 }

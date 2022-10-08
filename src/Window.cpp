@@ -5,7 +5,7 @@
 RealWindow::RealWindow(uint32_t width, uint32_t height, const MyColor& color) :
 Window(0, 0, width, height, color),
 realWindow_(sf::VideoMode(width, height), "Window"),
-isPressed_(0)
+lastPressedTime_(0)
 {   
     ptrToRealWdw_ = &realWindow_;
 };

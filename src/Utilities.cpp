@@ -15,3 +15,12 @@ int64_t GetTimeMiliseconds() {
     auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch);
     return miliseconds.count(); 
 }
+
+double ConvertSysToSys(const double value, const double min1, const double max1, const double min2, const double max2) {
+    double result = (value - min1) / (max1 - min1);
+    
+    result *= (max2 - min2);
+    result += min2;
+
+    return result;
+}

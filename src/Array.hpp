@@ -100,7 +100,7 @@ namespace Data {
         uint64_t capacity_;
 
         public:
-            Vector(const uint64_t size) :
+            explicit Vector(const uint64_t size) :
                 data_(nullptr),
                 size_(size), 
                 capacity_(DefaultCapacityMultiplier)
@@ -153,7 +153,8 @@ namespace Data {
             bool Resize(uint64_t size) {
                 if (size <= size_) {
                     for (uint64_t curIdx = size; curIdx < size_; curIdx++) {
-                        Destroy((*this)[curIdx]);
+                        // Destroy((*this)[curIdx]);
+                        (*this)[curIdx].~T();
                     }
 
                     size_ = size;
@@ -183,7 +184,7 @@ namespace Data {
                 catch (std::bad_alloc) {
                     std::cerr << "Can't alloc memory to increase vector" << std::endl;
 
-                    throw std::bad_alloc();
+                    throw;
                 }
                 
                 for (uint64_t curIdx = 0; curIdx < size_; curIdx++) {

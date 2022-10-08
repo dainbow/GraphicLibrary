@@ -71,6 +71,31 @@ class MethodCaller : public BaseHandler<TArguments> {
         TMethod callMethod_;
 };
 
+template <class T, class addT, class TArguments>
+class AddMethodCaller : public BaseHandler<TArguments> {
+        using TAddMethod = void (T::*)(addT* obj, const TArguments& args);
+
+    public:
+        AddMethodCaller(T* mainObject, addT* addObj, TAddMethod callMethod) :
+        mainObject_(mainObject),
+        addObject_(addObj),
+        callMethod_(callMethod)
+        {}
+
+        AddMethodCaller(const AddMethodCaller<T, addT, TArguments>& toCpy) = default;
+        AddMethodCaller<T, addT, TArguments>& operator=(const AddMethodCaller<T, addT, TArguments>& toCpy) = default;
+
+        virtual void Call(const TArguments& args) override {
+            (mainObject_->*callMethod_)(addObject_, args);
+        }
+
+    private:
+        T* mainObject_;
+        addT* addObject_;
+
+        TAddMethod callMethod_;
+};
+
 template <class TArguments>
 class Event {
     private:
@@ -95,5 +120,13 @@ class Event {
 
         void operator+=(BaseHandler<TArguments>* handler) {
             handlers.push_back(handler);
+        }
+
+        void PushFront(BaseHandler<TArguments>* handler) {
+            handlers.push_front(handler);
+        }
+
+        void Clear() {
+            handlers.clear();
         }
 };  

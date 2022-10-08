@@ -21,6 +21,8 @@ class Rectangle {
         // {}
 
         void Draw(sf::RenderWindow* window, const MyColor& color) {
+            assert(window);
+
             sf::Vector2f sizesVec = {float(width_), float(height_)};
             sf::RectangleShape rect(sizesVec);
 
@@ -64,6 +66,8 @@ class Image {
         }
 
         void Draw(sf::RenderWindow* window, const Vector& x0y0) const {
+            assert(window);
+
             sf::Vector2f sizesVec = {float(width_), float(height_)};
 
             sf::RectangleShape rectangle(sizesVec);
@@ -97,6 +101,8 @@ class Text {
         {}
 
         void Draw(sf::RenderWindow* window, const Vector& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
+            assert(window);
+            
             sf::Font font;
             font.loadFromFile("./fonts/arial.ttf");
 

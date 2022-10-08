@@ -11,15 +11,11 @@ class Window : public Widget {
     protected:
         ChildrenManager manager_;
 
-        int64_t width_;
-        int64_t height_;
-
         MyColor backColor_;
-
+    public:
         Window(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color) :
-        Widget(x, y),
+        Widget(x, y, width, height),
         manager_(),
-        width_(width), height_(height),
         backColor_(color)
         {
             onTick_  += new MethodCaller<ChildrenManager, int64_t>(&manager_, &ChildrenManager::TriggerTick);
@@ -28,7 +24,6 @@ class Window : public Widget {
             onRelease_ += new MethodCaller<ChildrenManager, int64_t>(&manager_, &ChildrenManager::TriggerRelease);
         }
 
-    public:
         virtual void Draw([[maybe_unused]] const int64_t& time) override {
             Vector newXY = ConvertXY(0, 0);
 
@@ -37,7 +32,7 @@ class Window : public Widget {
             realWindowRect.Draw(ptrToRealWdw_, backColor_);  
         }
 
-        void operator+=(Widget* newWidget) {
+        virtual void operator+=(Widget* newWidget) {
             newWidget->SetParent(this);
             newWidget->SetRealWindowPtr(ptrToRealWdw_);
 
@@ -64,11 +59,13 @@ class Window : public Widget {
         }
 };
 
+const int64_t TimeBetweenClicks = 30;
+
 class RealWindow final : public Window {
     private:
         sf::RenderWindow realWindow_;
 
-        bool isPressed_;
+        int64_t lastPressedTime_;
     public:
         RealWindow(uint32_t width, uint32_t height, const MyColor& color);
 
@@ -84,29 +81,27 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseMoved: {
-                    // Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
+                    Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
 
-                    // onMove_(moveCoords);
+                    onMove_(moveCoords);
 
                     break;
                 }
 
                 case sf::Event::MouseButtonPressed: {
-                    if (isPressed_)
+                    if ((GetTimeMiliseconds() - lastPressedTime_) < TimeBetweenClicks)
                         break;
 
                     Vector clickCoords = {double(curEvent.mouseButton.x), double(curEvent.mouseButton.y)};
-
                     onClick_(clickCoords);
 
-                    isPressed_ = 1;
+                    lastPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
 
                 case sf::Event::MouseButtonReleased: {
                     onRelease_(GetTimeMiliseconds());
 
-                    isPressed_ = 0;
                     break;
                 }
 
@@ -172,17 +167,110 @@ class DynamicWindow : public Window {
         Window(x, y, 0, 0, color)
         {}
 
-        void operator+=(Window* windowToAdd) {
+        void operator+=(Widget* windowToAdd) override {
             windowToAdd->shiftY_ = uint32_t(height_);
             height_ += windowToAdd->height_;
 
             windowToAdd->shiftX_ = 0;
             width_ = std::max(width_, windowToAdd->width_);
 
+            Window::operator+=(windowToAdd);
+        }
+};
 
-            windowToAdd->SetParent(this);
-            windowToAdd->SetRealWindowPtr(ptrToRealWdw_);
-            manager_ += windowToAdd;
+class LimitedWindow : public Window {
+    private:
+        void ClickVisible(ChildrenManager* obj, const Vector& vec) {
+            uint32_t curHeight      = 0;
+            uint32_t curShownHeight = 0;
+
+            for (auto& curWidget : *obj->GetWidgetsList()) {
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
+                    curWidget->shiftY_ = curShownHeight;
+                    curWidget->onClick_(vec);
+
+                    curShownHeight += uint32_t(curWidget->height_);
+                }
+
+                curHeight += uint32_t(curWidget->height_);
+            }
+        }
+
+        void TickVisible(ChildrenManager* obj, const int64_t& time) {
+            uint32_t curHeight      = 0;
+            uint32_t curShownHeight = 0;
+
+            for (auto& curWidget : *obj->GetWidgetsList()) {
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
+                    curWidget->shiftY_ = curShownHeight;
+                    curWidget->onTick_(time);
+
+                    curShownHeight += uint32_t(curWidget->height_);
+                }
+
+                curHeight += uint32_t(curWidget->height_);
+            }
+        }
+
+        void MoveVisible(ChildrenManager* obj, const Vector& vec) {
+            uint32_t curHeight = 0;
+            uint32_t curShownHeight = 0;
+
+            for (auto& curWidget : *obj->GetWidgetsList()) {
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
+                    curWidget->shiftY_ = curShownHeight;
+                    curWidget->onMove_(vec);
+
+                    curShownHeight += uint32_t(curWidget->height_);
+                }
+
+                curHeight += uint32_t(curWidget->height_);
+            }
+        }
+
+        void ReleaseVisible(ChildrenManager* obj, const int64_t& time) {
+            uint32_t curHeight = 0;
+            uint32_t curShownHeight = 0;
+
+            for (auto& curWidget : *obj->GetWidgetsList()) {
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
+                    curWidget->shiftY_ = curShownHeight;
+                    curWidget->onRelease_(time);
+
+                    curShownHeight += uint32_t(curWidget->height_);
+                }
+
+                curHeight += uint32_t(curWidget->height_);
+            }
+        }
+
+    public:
+        double curPointer_;
+
+        double minHeight_;
+        double maxHeight_;
+
+        virtual void operator+=(Widget* newWidget) override {
+            maxHeight_ += double(newWidget->height_);
+
+            Window::operator+=(newWidget);
+        }
+
+        LimitedWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color) :
+        Window(x, y, width, height, color),
+        curPointer_(0),
+        minHeight_(0), maxHeight_(0)
+        {
+            onTick_.Clear();
+            onClick_.Clear();
+            onMove_.Clear();
+            onRelease_.Clear();
+
+            onTick_    += new MethodCaller<Widget, int64_t>(this, &Widget::Draw);
+            onTick_    += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::TickVisible);
+            onClick_   += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::ClickVisible);
+            onMove_    += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::MoveVisible);
+            onRelease_ += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::ReleaseVisible);
         }
 };
 
