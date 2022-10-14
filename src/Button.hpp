@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sstream>
+
 #include "Window.hpp"
 
 const int64_t XTextShift = 2;
@@ -44,7 +46,7 @@ class Button : public Window {
         virtual void Draw ([[maybe_unused]] const int64_t& time) override {
             Vector newXY = ConvertXY(0, 0);
 
-            Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_)});
+            Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
 
             MyColor curColor = 0;
             if (isClicked_) {
@@ -58,6 +60,8 @@ class Button : public Window {
 
             if (text_.GetSize()) {
                 Vector textXY = ConvertXY(XTextShift, YTextShift);
+                text_.rotation_ = GetRotation();
+
                 text_.Draw(ptrToRealWdw_, textXY, width_, height_);
             }
         }
@@ -102,6 +106,12 @@ class DropList : public Button {
             }
         }
 
+        void ConditionalKey (const sf::Keyboard::Key& key) {
+            if (isClicked_) {
+                list_->onKeyboard_(key);
+            }
+        }
+
     public:
         DynamicWindow* list_;
 
@@ -113,10 +123,11 @@ class DropList : public Button {
         Button(x, y, width, height, backColor, gradColor, clickColor),
         list_(new DynamicWindow(x, y + uint32_t(height_), clickColor))
         {
-            onTick_    += new MethodCaller<DropList, int64_t>(this, &DropList::ConditionalTick);
-            onMove_    += new MethodCaller<DropList, Vector>(this, &DropList::ConditionalMove);
-            onClick_   += new MethodCaller<DropList, Vector>(this, &DropList::ConditionalClick);
-            onRelease_ += new MethodCaller<DropList, int64_t>(this, &DropList::ConditionalRelease);
+            onTick_     += new MethodCaller<DropList, int64_t>(this, &DropList::ConditionalTick);
+            onMove_     += new MethodCaller<DropList, Vector>(this, &DropList::ConditionalMove);
+            onClick_    += new MethodCaller<DropList, Vector>(this, &DropList::ConditionalClick);
+            onRelease_  += new MethodCaller<DropList, int64_t>(this, &DropList::ConditionalRelease);
+            onKeyboard_ += new MethodCaller<DropList, sf::Keyboard::Key>(this, &DropList::ConditionalKey);
         }
 
         virtual void SetParent(Widget* parent) override {
@@ -264,6 +275,11 @@ class ScrollBar : public Window {
             manager_ += arrowDown_;
         }
 
+        void SetHeight(const uint32_t height) {
+            height_ = height;
+            arrowDown_->shiftY_ = height - defaultArrowsHeight;
+        }
+
         virtual void SetParent(Widget* parent) override {
             parent_ = parent;
             
@@ -284,9 +300,10 @@ class ScrollBar : public Window {
 const uint32_t defaultBarWidth = 20;
 
 class List : public LimitedWindow {
-    private:
+    public:
         ScrollBar* scrollBar_;
 
+    private:
         void TickScroll(const int64_t& time) {
             scrollBar_->onTick_(time);
         }
@@ -303,6 +320,10 @@ class List : public LimitedWindow {
             scrollBar_->onRelease_(time);
         }
 
+        void KeyScroll(const sf::Keyboard::Key& key) {
+            scrollBar_->onKeyboard_(key);
+        }
+
     public: 
         List(const List& list) = default;
         List& operator=(const List& list) = default;
@@ -311,10 +332,11 @@ class List : public LimitedWindow {
         LimitedWindow(x, y, width, height, color),
         scrollBar_(new ScrollBar(width - defaultBarWidth, 0, defaultBarWidth, height, barColor, &curPointer_, &minHeight_, &maxHeight_))
         {
-            onTick_    += new MethodCaller<List, int64_t>(this, &List::TickScroll);
-            onClick_   += new MethodCaller<List, Vector>(this, &List::ClickScroll);
-            onMove_    += new MethodCaller<List, Vector>(this, &List::MoveScroll);
-            onRelease_ += new MethodCaller<List, int64_t>(this, &List::ReleaseScroll);
+            onTick_     += new MethodCaller<List, int64_t>(this, &List::TickScroll);
+            onClick_    += new MethodCaller<List, Vector>(this, &List::ClickScroll);
+            onMove_     += new MethodCaller<List, Vector>(this, &List::MoveScroll);
+            onRelease_  += new MethodCaller<List, int64_t>(this, &List::ReleaseScroll);
+            onKeyboard_ += new MethodCaller<List, sf::Keyboard::Key>(this, &List::KeyScroll);
         }
 
         virtual void operator+=(Widget* newWidget) override {
@@ -327,7 +349,7 @@ class List : public LimitedWindow {
 
             scrollBar_->SetButHigh(uint32_t(visibleCoef * double(height_ - 2 * defaultArrowsHeight)));
             if ((int64_t(curPointer_) + scrollBar_->GetButHigh()) > (height_ - int64_t(defaultArrowsHeight))) {
-                curPointer_ = height_ - defaultArrowsHeight - scrollBar_->GetButHigh();
+                curPointer_ = double(height_ - int64_t(defaultArrowsHeight) - scrollBar_->GetButHigh());
             }
         }
 
@@ -341,5 +363,143 @@ class List : public LimitedWindow {
             ptrToRealWdw_ = realPtr;
             
             scrollBar_->SetRealWindowPtr(realPtr);
+        }
+};
+
+class TextField : public Button {
+    private:
+        virtual void FlagReleased([[maybe_unused]] const int64_t& time) override {
+            isHolded_ = 0;
+        }
+
+        virtual void FlagClicked(const Vector& coords) override {
+            if (IsClicked(coords)) {
+                isClicked_ ^= 1;
+            }
+            else if (isClicked_) {
+                isClicked_ = 0;
+            }
+        }
+
+        virtual void TextKeyPressed(const sf::Keyboard::Key& key) {
+            if (isClicked_) {
+                std::string tempString = *text_.GetRealString();
+
+                if (key == sf::Keyboard::Backspace) {
+                    if (tempString.size() > 0) {
+                        tempString.pop_back();
+                    }
+                }
+                else if ((key >= sf::Keyboard::A) && (key <= sf::Keyboard::Z)) {
+                    tempString += char('a' + (key - sf::Keyboard::A));
+                }
+                else if ((key >= sf::Keyboard::Num0) && (key <= sf::Keyboard::Num9)) {
+                    tempString += char('0' + (key - sf::Keyboard::Num0));
+                }
+                else if (key == sf::Keyboard::Space) {
+                    tempString += ' ';
+                }
+                else if (key == sf::Keyboard::Hyphen) {
+                    tempString += '-';
+                }
+                else if (key == sf::Keyboard::Period) {
+                    tempString += '.';
+                }
+
+                SetText(tempString, textColor_);
+            }
+        }
+
+    public:
+        MyColor textColor_;
+
+        TextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
+                  const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor,
+                  const MyColor& textColor) :
+        Button(x, y, width, height, backColor, gradColor, clickColor),
+        textColor_(textColor)
+        {
+            onKeyboard_ += new MethodCaller<TextField, sf::Keyboard::Key>(this, &TextField::TextKeyPressed);
+        }
+};
+
+template <class T>
+class CtrlTextField : public TextField {
+    private:
+        T* ctrlThing_;
+        bool* isChanged_;
+
+        virtual void FlagClicked(const Vector& coords) override {
+            bool isClickedBefore = isClicked_;
+
+            if (IsClicked(coords)) {
+                isClicked_ ^= 1;
+            }
+            else if (isClicked_) {
+                isClicked_ = 0;
+            }
+
+            if (isClickedBefore && !isClicked_ && ctrlThing_) {
+                std::stringstream myStream(*text_.GetRealString());
+
+                myStream >> *ctrlThing_;
+                if (isChanged_) {
+                    *isChanged_ = 1;
+                }
+            }
+        }
+
+    public:
+        CtrlTextField(const CtrlTextField& field) = default;
+        CtrlTextField& operator=(const CtrlTextField& field) = default;
+
+        CtrlTextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
+                  const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor,
+                  const MyColor& textColor, T* ctrlThing, bool* changedFlag):
+        TextField(x, y, width, height, backColor, gradColor, clickColor, textColor),
+        ctrlThing_(ctrlThing), isChanged_(changedFlag)
+        {
+            if (ctrlThing_) {
+                std::stringstream mySteam;
+                mySteam << *ctrlThing;
+
+                *text_.GetRealString() = mySteam.str();
+            }
+        }
+};
+
+class ProgressBar : public CustomButton<double> {
+    private:
+        double minValue_;
+        double maxValue_;
+
+    public:
+        ProgressBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color, const MyColor& progressColor, double* valueToCtrl, double minValue, double maxValue) :
+        CustomButton(x, y, width, height, color, 0, progressColor, valueToCtrl),
+        minValue_(minValue), maxValue_(maxValue)
+        {
+
+        }
+
+        virtual void Draw([[maybe_unused]] const int64_t& time) override {
+            Window::Draw(time);
+
+            uint32_t percent = uint32_t((*context_ - minValue_) / (maxValue_ - minValue_) * 100);
+
+            Vector newXY = ConvertXY(0, 0);
+            Rectangle realWindowRect({width_ * int64_t(percent) / 100, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
+
+            realWindowRect.Draw(ptrToRealWdw_, clickColor_);  
+
+            std::stringstream stream;
+            stream << percent << "%";
+
+            SetText(stream.str());
+            if (text_.GetSize()) {
+                Vector textXY = ConvertXY(XTextShift, YTextShift);
+                text_.rotation_ = GetRotation();
+
+                text_.Draw(ptrToRealWdw_, textXY, width_, height_);
+            }
         }
 };

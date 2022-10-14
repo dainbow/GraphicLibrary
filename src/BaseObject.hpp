@@ -20,22 +20,20 @@ struct Material {
     virtual ~Material() {};
 };
 
+class Raytracer;
+
 class BaseObject {
     public:
         const Material* objectMaterial_;
+        std::string name_;
 
-        BaseObject(const BaseObject& object) :
-        objectMaterial_(object.objectMaterial_)
-        {};
+        Raytracer* parent_;
 
-        BaseObject& operator=(const BaseObject& object) {
-            objectMaterial_ = object.objectMaterial_;
+        BaseObject(const BaseObject& object) = default;
+        BaseObject& operator=(const BaseObject& object) = default;
 
-            return *this;
-        }
-
-        BaseObject(const Material* material) :
-        objectMaterial_(material) 
+        BaseObject(const Material* material, const std::string name = "") :
+        objectMaterial_(material), name_(name), parent_(nullptr)
         {};
 
         virtual Ray Trace(const Ray& ray, MyColor* absorbedColor) const = 0;

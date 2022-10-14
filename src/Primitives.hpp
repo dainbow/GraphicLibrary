@@ -15,10 +15,7 @@ class Rectangle {
         int64_t x_;
         int64_t y_;
 
-        // Rectangle (uint32_t width, uint32_t height, uint32_t x, uint32_t y) :
-        // width_(width), height_(height),
-        // x_(x), y_(y)
-        // {}
+        float rotation_ = 0;
 
         void Draw(sf::RenderWindow* window, const MyColor& color) {
             assert(window);
@@ -29,8 +26,10 @@ class Rectangle {
             rect.setPosition({float(x_), float(y_)});
 
             sf::Color curColor(color.red_, color.green_, color.blue_);
+
             rect.setFillColor(curColor);
 
+            rect.setRotation(float((rotation_ * 180.0) / M_PI));
             window->draw(rect);
         }
 };
@@ -43,6 +42,8 @@ class Image {
         uint32_t width_  = 0;
         uint32_t height_ = 0;
 
+        float rotation_ = 0;
+
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
             realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_});
         }
@@ -50,6 +51,13 @@ class Image {
         bool LoadFromFile(const sf::String& imageName) {
             return realImage_.loadFromFile(imageName);
         }   
+
+        Image(uint32_t width, uint32_t height, const MyColor& color = 0) {
+            width_  = width;
+            height_ = height;
+
+            realImage_.create(width, height, {color.red_, color.green_, color.blue_});
+        }
         
         void Create(uint32_t width, uint32_t height, const uint8_t* pixels) {
             width_  = width;
@@ -65,40 +73,58 @@ class Image {
             realImage_.create(width, height, {color.red_, color.green_, color.blue_});
         }
 
-        void Draw(sf::RenderWindow* window, const Vector& x0y0) const {
+        void Clear() {
+            for (uint32_t curX = 0; curX < width_; curX++) {
+                for (uint32_t curY = 0; curY < height_; curY++) {
+                    realImage_.setPixel(curX, curY, {0, 0, 0});
+                }
+            }
+        }
+
+        void Draw(sf::RenderWindow* window, const Vector& x0y0, const Vector& xyVirt, const uint32_t width, const uint32_t height) const {
             assert(window);
 
-            sf::Vector2f sizesVec = {float(width_), float(height_)};
+            sf::Vector2f sizesVec = {float(width), float(height)};
 
             sf::RectangleShape rectangle(sizesVec);
             rectangle.setPosition({float(x0y0.x_), float(x0y0.y_)});
 
             sf::Texture curTexture = {};
-            curTexture.loadFromImage(realImage_);
+
+            sf::IntRect area = {sf::Vector2i(int32_t(xyVirt.x_), int32_t(xyVirt.y_)), sf::Vector2i(width, height)};
+            
+            curTexture.loadFromImage(realImage_, area);
 
             rectangle.setTexture(&curTexture);
 
+            rectangle.setRotation(float((rotation_ / M_PI) * 180.0));
             window->draw(rectangle);
         }
 };
 
 class Text {
     private:
-        sf::String realString_;
+        std::string realString_;
         MyColor textColor_;
 
     public: 
+        float rotation_ = 0;
+
         uint64_t GetSize() {
-            return realString_.getSize();
+            return realString_.size();
         }
 
-        void SetText(const sf::String& newString) {
+        void SetText(const std::string& newString) {
             realString_ = newString;
         }
 
-        Text(const sf::String& newString = "", const MyColor& newColor = 0) :
+        Text(const std::string& newString = "", const MyColor& newColor = 0) :
         realString_(newString), textColor_(newColor) 
         {}
+
+        std::string* GetRealString() {
+            return &realString_;
+        }
 
         void Draw(sf::RenderWindow* window, const Vector& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
             assert(window);
@@ -115,6 +141,7 @@ class Text {
             sf::Color curColor(textColor_.red_, textColor_.green_, textColor_.blue_);
             text.setFillColor(curColor);
 
+            text.setRotation(float((rotation_ / M_PI) * 180.0));
             window->draw(text);
         }
 };  

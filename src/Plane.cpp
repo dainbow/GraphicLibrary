@@ -91,7 +91,7 @@ double SubstituteAtPlane(const Vector3D& point, const Matrix& plane, const uint3
     return point.x_ * plane.GetElem(row, 0) + point.y_ * plane.GetElem(row, 1) + point.z_ * plane.GetElem(row, 2) + plane.GetElem(row, 3);
 }
 
-Plane GetXZPlane(const Material* material, const double y, const double xMin, const double xMax, const double zMin, const double zMax) {
+Plane* GetXZPlane(const Material* material, const double y, const double xMin, const double xMax, const double zMin, const double zMax) {
     Matrix plane1(1, 4);
     plane1.SetElem(0, 0, 0);
     plane1.SetElem(0, 1, 1);
@@ -123,10 +123,10 @@ Plane GetXZPlane(const Material* material, const double y, const double xMin, co
     limits.SetElem(3, 3, -zMin);
     limits.SetElem(3, 4, 1);
 
-    return Plane(plane1, limits, material);
+    return new Plane(plane1, limits, material);
 }
 
-Plane GetXYPlane(const Material* material, const double z, const double xMin, const double xMax, const double yMin, const double yMax) {
+Plane* GetXYPlane(const Material* material, const double z, const double xMin, const double xMax, const double yMin, const double yMax) {
     Matrix plane1(1, 4);
     plane1.SetElem(0, 0, 0);
     plane1.SetElem(0, 1, 0);
@@ -158,10 +158,10 @@ Plane GetXYPlane(const Material* material, const double z, const double xMin, co
     limits.SetElem(3, 3, -yMin);
     limits.SetElem(3, 4, 1);
 
-    return Plane(plane1, limits, material);
+    return new Plane(plane1, limits, material);
 }
 
-Plane GetZYPlane(const Material* material, const double x, const double zMin, const double zMax, const double yMin, const double yMax) {
+Plane* GetZYPlane(const Material* material, const double x, const double zMin, const double zMax, const double yMin, const double yMax) {
     Matrix plane1(1, 4);
     plane1.SetElem(0, 0, 1);
     plane1.SetElem(0, 1, 0);
@@ -193,6 +193,6 @@ Plane GetZYPlane(const Material* material, const double x, const double zMin, co
     limits.SetElem(3, 3, -yMin);
     limits.SetElem(3, 4, 1);
 
-    return Plane(plane1, limits, material);
+    return new Plane(plane1, limits, material);
 }
 

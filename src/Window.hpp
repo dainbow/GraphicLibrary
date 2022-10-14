@@ -22,12 +22,14 @@ class Window : public Widget {
             onClick_ += new MethodCaller<ChildrenManager, Vector>(&manager_, &ChildrenManager::TriggerClick);
             onMove_  += new MethodCaller<ChildrenManager, Vector>(&manager_, &ChildrenManager::TriggerMove);
             onRelease_ += new MethodCaller<ChildrenManager, int64_t>(&manager_, &ChildrenManager::TriggerRelease);
+            onKeyboard_ += new MethodCaller<ChildrenManager, sf::Keyboard::Key>(&manager_, &ChildrenManager::TriggetKeyPressed);
         }
 
         virtual void Draw([[maybe_unused]] const int64_t& time) override {
             Vector newXY = ConvertXY(0, 0);
 
-            Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_)});
+            // std::cout << newXY << std::endl;
+            Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
 
             realWindowRect.Draw(ptrToRealWdw_, backColor_);  
         }
@@ -47,11 +49,30 @@ class Window : public Widget {
         }
 
         virtual bool IsClicked(const Vector& vec) override {
-            Vector x0y0 = ConvertXY(0, 0);
-            Vector x1y1 = ConvertXY(width_, height_);
+            Vector realVec = ConvertRealXY(int64_t(vec.x_), int64_t(vec.y_));
 
-            return ((vec.x_ >= x0y0.x_)  && (vec.x_ <= x1y1.x_) && 
-                    (vec.y_ >= x0y0.y_)  && (vec.y_ <= x1y1.y_));
+            return ((realVec.x_ >= 0)  && (realVec.x_ <= double(width_)) && 
+                    (realVec.y_ >= 0)  && (realVec.y_ <= double(height_)));
+        }
+
+        virtual void SetParent(Widget* newParent) override {
+            parent_ = newParent;
+
+            for (auto& curChild : *manager_.GetWidgetsList()) {
+                curChild->SetParent(this);
+            }
+        }
+
+        virtual void SetRealWindowPtr(sf::RenderWindow* newPtr) override {
+            ptrToRealWdw_ = newPtr;
+
+            for (auto& curChild : *manager_.GetWidgetsList()) {
+                curChild->SetRealWindowPtr(newPtr);
+            }
+        }
+
+        void Clear() {
+            manager_.Clear();
         }
 
         ~Window() {
@@ -60,12 +81,17 @@ class Window : public Widget {
 };
 
 const int64_t TimeBetweenClicks = 30;
+const int64_t TimeBetweenKeys   = 50;
+const int64_t TimeBetweenTicks  = 10;
 
 class RealWindow final : public Window {
     private:
         sf::RenderWindow realWindow_;
 
         int64_t lastPressedTime_;
+        int64_t lastKeyPressedTime_;
+        int64_t lastReleasedTime_;
+        int64_t lastTickTime_;
     public:
         RealWindow(uint32_t width, uint32_t height, const MyColor& color);
 
@@ -81,9 +107,9 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseMoved: {
-                    Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
+                    // Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
 
-                    onMove_(moveCoords);
+                    // onMove_(moveCoords);
 
                     break;
                 }
@@ -100,8 +126,24 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseButtonReleased: {
+                    if ((GetTimeMiliseconds() - lastReleasedTime_) < TimeBetweenKeys)
+                        break;
+
                     onRelease_(GetTimeMiliseconds());
 
+                    lastReleasedTime_ = GetTimeMiliseconds();
+                    break;
+                }
+
+                case sf::Event::KeyPressed: {
+                    if ((GetTimeMiliseconds() - lastKeyPressedTime_) < TimeBetweenKeys)
+                        break;
+
+                    std::cout << uint32_t(curEvent.key.code) << std::endl;
+
+                    onKeyboard_(curEvent.key.code);
+
+                    lastKeyPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
 
@@ -110,7 +152,6 @@ class RealWindow final : public Window {
                 case sf::Event::LostFocus:
                 case sf::Event::GainedFocus:
                 case sf::Event::TextEntered:
-                case sf::Event::KeyPressed:
                 case sf::Event::KeyReleased:
                 case sf::Event::MouseWheelMoved:
                 case sf::Event::MouseWheelScrolled:
@@ -129,7 +170,11 @@ class RealWindow final : public Window {
                     break;
             }
 
+            if ((GetTimeMiliseconds() - lastTickTime_) < TimeBetweenTicks)
+                return;
+
             onTick_(GetTimeMiliseconds());
+            lastTickTime_ = GetTimeMiliseconds();
         }
 
         virtual bool IsClicked([[maybe_unused]] const Vector& vec) override {
@@ -244,6 +289,22 @@ class LimitedWindow : public Window {
             }
         }
 
+        void KeyVisible(ChildrenManager* obj, const sf::Keyboard::Key& key) {
+            uint32_t curHeight = 0;
+            uint32_t curShownHeight = 0;
+
+            for (auto& curWidget : *obj->GetWidgetsList()) {
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
+                    curWidget->shiftY_ = curShownHeight;
+                    curWidget->onKeyboard_(key);
+
+                    curShownHeight += uint32_t(curWidget->height_);
+                }
+
+                curHeight += uint32_t(curWidget->height_);
+            }
+        }
+
     public:
         double curPointer_;
 
@@ -265,12 +326,14 @@ class LimitedWindow : public Window {
             onClick_.Clear();
             onMove_.Clear();
             onRelease_.Clear();
+            onKeyboard_.Clear();
 
-            onTick_    += new MethodCaller<Widget, int64_t>(this, &Widget::Draw);
-            onTick_    += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::TickVisible);
-            onClick_   += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::ClickVisible);
-            onMove_    += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::MoveVisible);
-            onRelease_ += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::ReleaseVisible);
+            onTick_     += new MethodCaller<Widget, int64_t>(this, &Widget::Draw);
+            onTick_     += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::TickVisible);
+            onClick_    += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::ClickVisible);
+            onMove_     += new AddMethodCaller<LimitedWindow, ChildrenManager, Vector>(this, &manager_, &LimitedWindow::MoveVisible);
+            onRelease_  += new AddMethodCaller<LimitedWindow, ChildrenManager, int64_t>(this, &manager_, &LimitedWindow::ReleaseVisible);
+            onKeyboard_ += new AddMethodCaller<LimitedWindow, ChildrenManager, sf::Keyboard::Key>(this, &manager_, &LimitedWindow::KeyVisible);
         }
 };
 

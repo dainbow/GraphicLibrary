@@ -25,6 +25,6 @@ class Plane final : public BaseObject {
 
 double SubstituteAtPlane(const Vector3D& point, const Matrix& plane, const uint32_t row = 0);
 
-Plane GetXZPlane(const Material* material, const double z, const double xMin = -INFINITY, const double xMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY); 
-Plane GetXYPlane(const Material* material, const double z, const double xMin = -INFINITY, const double xMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY);
-Plane GetZYPlane(const Material* material, const double x, const double zMin = -INFINITY, const double zMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY);
+Plane* GetXZPlane(const Material* material, const double z, const double xMin = -INFINITY, const double xMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY); 
+Plane* GetXYPlane(const Material* material, const double z, const double xMin = -INFINITY, const double xMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY);
+Plane* GetZYPlane(const Material* material, const double x, const double zMin = -INFINITY, const double zMax = INFINITY, const double yMin = -INFINITY, const double yMax = INFINITY);

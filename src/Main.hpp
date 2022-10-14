@@ -33,4 +33,6 @@ class ControlGraphics {
 void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
 void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
 void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
-void AddButtonToList(CustomButton<List>* button, const Vector& vec);
+
+void AddSphereToTracer(CustomButton<Raytracer>* button, const Vector& vec);
+void AddPlaneToTracer(CustomButton<Raytracer>* button, const Vector& vec);

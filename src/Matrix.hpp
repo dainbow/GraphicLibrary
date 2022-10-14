@@ -8,9 +8,10 @@
 #include "Utilities.hpp"
 
 class Matrix {
-    private:
+    public:
         double** array_;
 
+    private:
         uint32_t rowsAmount_   = 0;
         uint32_t columnAmount_ = 0;
 
