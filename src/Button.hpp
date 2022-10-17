@@ -9,38 +9,38 @@ const int64_t YTextShift = 2;
 
 class Button : public Window {
     protected:
-        MyColor gradColor_;
-        MyColor clickColor_;
-
-        int64_t enterTime_;
+        bool isHovered_;
 
         Text text_;
 
-    public:
-        void SetText(const sf::String& newString = "", const MyColor& newColor = 0) {
-            text_ = {newString, newColor};
-        }
-
-        void ControlEnterTime(const Vector& vec) {  
-            if ((!enterTime_) && IsClicked(vec)) {
-                enterTime_ = GetTimeMiliseconds();
+        virtual void MoveHover(const Vector& cords) {
+            if (IsClicked(cords)) {
+                isHovered_ = 1;
             }
             else {
-                enterTime_ = 0;
+                isHovered_ = 0;
             }
+        }
+
+    public:
+        SkinIdxs hoveredSkin_;
+        SkinIdxs clickedSkin_;
+
+        void SetText(const sf::String& newString = "", const MyColor& newColor = 0) {
+            text_ = {newString, newColor};
         }
 
         Button(const Button& button) = default;
         Button& operator=(const Button& button) = default;
 
-        Button(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-               const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor) :
-        Window(x, y, width, height, backColor),
-        gradColor_(gradColor), clickColor_(clickColor),
-        enterTime_(0),
-        text_()
+        Button(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
+        Window(x, y, width, height),
+        isHovered_(0),
+        text_(),
+        hoveredSkin_(SkinIdxs::ButtonHovering), clickedSkin_(SkinIdxs::ButtonPressed)
         {   
-            onMove_    += new MethodCaller<Button, Vector> (this, &Button::ControlEnterTime);
+            widgetSkin_ = SkinIdxs::ButtonNotPressed;
+            onMove_    += new MethodCaller<Button, Vector> (this, &Button::MoveHover);
         }
 
         virtual void Draw ([[maybe_unused]] const int64_t& time) override {
@@ -48,15 +48,20 @@ class Button : public Window {
 
             Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
 
-            MyColor curColor = 0;
+            sf::Texture* curTexture = nullptr;
             if (isClicked_) {
-                curColor = clickColor_;
+                curTexture = skinManager_->GetTexture(clickedSkin_);
             }
             else {
-                curColor = backColor_;
+                if (isHovered_) {
+                    curTexture = skinManager_->GetTexture(hoveredSkin_);
+                }
+                else {
+                    curTexture = skinManager_->GetTexture(widgetSkin_);
+                }
             }
 
-            realWindowRect.Draw(ptrToRealWdw_, curColor);  
+            realWindowRect.Draw(ptrToRealWdw_, curTexture);  
 
             if (text_.GetSize()) {
                 Vector textXY = ConvertXY(XTextShift, YTextShift);
@@ -118,10 +123,9 @@ class DropList : public Button {
         DropList(const DropList& dropList)            = default;
         DropList& operator=(const DropList& dropList) = default;
 
-        DropList(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-                 const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor) :
-        Button(x, y, width, height, backColor, gradColor, clickColor),
-        list_(new DynamicWindow(x, y + uint32_t(height_), clickColor))
+        DropList(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
+        Button(x, y, width, height),
+        list_(new DynamicWindow(x, y + uint32_t(height_)))
         {
             onTick_     += new MethodCaller<DropList, int64_t>(this, &DropList::ConditionalTick);
             onMove_     += new MethodCaller<DropList, Vector>(this, &DropList::ConditionalMove);
@@ -138,6 +142,11 @@ class DropList : public Button {
         virtual void SetRealWindowPtr(sf::RenderWindow* realPtr) override {
             ptrToRealWdw_ = realPtr;
             list_->SetRealWindowPtr(realPtr);
+        }
+
+        virtual void SetSkinManager(SkinManager* skinManager) override {
+            skinManager_ = skinManager;
+            list_->SetSkinManager(skinManager);
         }
 
         void operator+=(Widget* windowAdd) override {
@@ -160,11 +169,12 @@ class CustomButton : public Button {
         CustomButton(const CustomButton<T>& anotherButton)               = default;
         CustomButton<T>& operator=(const CustomButton<T>& anotherButton) = default;
 
-        CustomButton(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-               const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor, T* context) :
-        Button(x, y, width, height, backColor, gradColor, clickColor),
+        CustomButton(uint32_t x, uint32_t y, uint32_t width, uint32_t height, T* context) :
+        Button(x, y, width, height),
         context_(context)
-        {}
+        {
+            hoveredSkin_ = SkinIdxs::ButtonNotPressed;
+        }
 
         T* GetContext() {
             return context_;
@@ -199,9 +209,14 @@ class ScrollBar : public Window {
         }
 
         void ArrowUp(const Vector& cords) {
+            RecalcScale();
+
             if (arrowUp_->IsClicked(cords)) {
                 if (((*valueToCtrl_ - scale_) > *minValue_) || CmpDbl(*valueToCtrl_ - scale_, *minValue_)) {
+                    std::cout << scale_ << std::endl;
                     *valueToCtrl_ -= scale_;
+
+                    std::cout << *valueToCtrl_ << std::endl;
                 }
                 else {
                     *valueToCtrl_ = *minValue_;
@@ -210,6 +225,8 @@ class ScrollBar : public Window {
         }
 
         void ArrowDown(const Vector& cords) {
+            RecalcScale();
+
             if (arrowDown_->IsClicked(cords)) {
                 double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->height_), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
 
@@ -222,19 +239,29 @@ class ScrollBar : public Window {
             }
         }
 
+        void MoveTo(const Vector& cords) {
+            Vector newCords = ConvertRealXY(int64_t(cords.x_), int64_t(cords.y_));
+
+            double newValue = ConvertSysToSys(newCords.y_, double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
+            double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->height_), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
+            
+            if ((newValue <= *valueToCtrl_ ) && (newValue >= *minValue_)) {
+                *valueToCtrl_ = newValue;
+            }
+            else if (((newValue - realLength) >= *valueToCtrl_) && (newValue <= *maxValue_)) {
+                *valueToCtrl_ = newValue - realLength;
+            }
+        }
+
         void ClickAtBar(const Vector& cords) {
             if (IsClicked(cords) && !arrowDown_->IsClicked(cords) && !arrowUp_->IsClicked(cords) && !valueBut_->IsClicked(cords)) {
-                Vector newCords = ConvertRealXY(int64_t(cords.x_), int64_t(cords.y_));
+                MoveTo(cords);
+            }
+        }
 
-                double newValue = ConvertSysToSys(newCords.y_, double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
-                double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->height_), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
-                
-                if ((newValue <= *valueToCtrl_ ) && (newValue >= *minValue_)) {
-                    *valueToCtrl_ = newValue;
-                }
-                else if (((newValue - realLength) >= *valueToCtrl_) && (newValue <= *maxValue_)) {
-                    *valueToCtrl_ = newValue - realLength;
-                }
+        void MoveAtBar(const Vector& cords) {
+            if (valueBut_->isClicked_) {
+                MoveTo(cords);
             }
         }
 
@@ -254,24 +281,30 @@ class ScrollBar : public Window {
             scale_ = (*maxValue_ - *minValue_) / double(height_ - 2 * defaultArrowsHeight - valueBut_->height_);
         }
 
-        ScrollBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color, double* valueToCtrl, double* minValue, double* maxValue) :
-        Window(x, y, width, height, color),
+        ScrollBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, double* valueToCtrl, double* minValue, double* maxValue) :
+        Window(x, y, width, height),
         valueToCtrl_(valueToCtrl), 
         minValue_(minValue), maxValue_(maxValue),
         scale_(0),
-        arrowUp_(new Button(0, 0, width, defaultArrowsHeight, 0, 0, 0x00FF0000)),
-        valueBut_(new Button(0, defaultArrowsHeight, width, defaultBarHeight, 0, 0, 0xFF000000)),
-        arrowDown_(new Button(0, height - defaultArrowsHeight, width, defaultArrowsHeight, 0, 0, 0x00FF0000))
+        arrowUp_(new Button(0, 0, width, defaultArrowsHeight)),
+        valueBut_(new Button(0, defaultArrowsHeight, width, defaultBarHeight)),
+        arrowDown_(new Button(0, height - defaultArrowsHeight, width, defaultArrowsHeight))
         {
+            onMove_ += new MethodCaller<ScrollBar, Vector>(this, &ScrollBar::MoveAtBar);
+
+            widgetSkin_ = SkinIdxs::ScrollBackground;
             onClick_ += new MethodCaller<ScrollBar, Vector>(this, &ScrollBar::ClickAtBar);
 
             arrowUp_->onClick_ += new MethodCaller<ScrollBar, Vector>(this, &ScrollBar::ArrowUp);
+            arrowUp_->widgetSkin_ = SkinIdxs::ScrollUp;
             manager_ += arrowUp_;
 
             valueBut_->onTick_.PushFront(new MethodCaller<ScrollBar, int64_t>(this, &ScrollBar::UpdateBarPosition));
+            valueBut_->widgetSkin_ = SkinIdxs::ScrollMiddle;
             manager_ += valueBut_;
 
             arrowDown_->onClick_ += new MethodCaller<ScrollBar, Vector>(this, &ScrollBar::ArrowDown);
+            arrowDown_->widgetSkin_ = SkinIdxs::ScrollDown;
             manager_ += arrowDown_;
         }
 
@@ -294,6 +327,14 @@ class ScrollBar : public Window {
             arrowUp_->SetRealWindowPtr(realPtr);
             valueBut_->SetRealWindowPtr(realPtr);
             arrowDown_->SetRealWindowPtr(realPtr);
+        }
+
+        virtual void SetSkinManager(SkinManager* skinManager) override {
+            skinManager_ = skinManager;
+
+            arrowUp_->SetSkinManager(skinManager);
+            valueBut_->SetSkinManager(skinManager);
+            arrowDown_->SetSkinManager(skinManager);
         }
 };
 
@@ -328,9 +369,9 @@ class List : public LimitedWindow {
         List(const List& list) = default;
         List& operator=(const List& list) = default;
 
-        List(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color, const MyColor& barColor) :
-        LimitedWindow(x, y, width, height, color),
-        scrollBar_(new ScrollBar(width - defaultBarWidth, 0, defaultBarWidth, height, barColor, &curPointer_, &minHeight_, &maxHeight_))
+        List(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
+        LimitedWindow(x, y, width, height),
+        scrollBar_(new ScrollBar(width - defaultBarWidth, 0, defaultBarWidth, height, &curPointer_, &minHeight_, &maxHeight_))
         {
             onTick_     += new MethodCaller<List, int64_t>(this, &List::TickScroll);
             onClick_    += new MethodCaller<List, Vector>(this, &List::ClickScroll);
@@ -364,6 +405,12 @@ class List : public LimitedWindow {
             
             scrollBar_->SetRealWindowPtr(realPtr);
         }
+
+        virtual void SetSkinManager(SkinManager* skinManager) override {
+            skinManager_ = skinManager;
+
+            scrollBar_->SetSkinManager(skinManager);
+        }
 };
 
 class TextField : public Button {
@@ -379,6 +426,10 @@ class TextField : public Button {
             else if (isClicked_) {
                 isClicked_ = 0;
             }
+        }
+
+        virtual void MoveHover([[maybe_unused]] const Vector& coords) override {
+
         }
 
         virtual void TextKeyPressed(const sf::Keyboard::Key& key) {
@@ -406,19 +457,19 @@ class TextField : public Button {
                     tempString += '.';
                 }
 
-                SetText(tempString, textColor_);
+                SetText(tempString, 0xffffff00);
             }
         }
 
     public:
-        MyColor textColor_;
-
-        TextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-                  const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor,
-                  const MyColor& textColor) :
-        Button(x, y, width, height, backColor, gradColor, clickColor),
-        textColor_(textColor)
+        TextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
+        Button(x, y, width, height)
         {
+            SetText("", 0xffffff00);
+
+            widgetSkin_  = SkinIdxs::InactiveText;
+            clickedSkin_ = SkinIdxs::ActiveText;
+
             onKeyboard_ += new MethodCaller<TextField, sf::Keyboard::Key>(this, &TextField::TextKeyPressed);
         }
 };
@@ -453,14 +504,13 @@ class CtrlTextField : public TextField {
         CtrlTextField(const CtrlTextField& field) = default;
         CtrlTextField& operator=(const CtrlTextField& field) = default;
 
-        CtrlTextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-                  const MyColor& backColor, const MyColor& gradColor, const MyColor& clickColor,
-                  const MyColor& textColor, T* ctrlThing, bool* changedFlag):
-        TextField(x, y, width, height, backColor, gradColor, clickColor, textColor),
+        CtrlTextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height, T* ctrlThing, bool* changedFlag):
+        TextField(x, y, width, height),
         ctrlThing_(ctrlThing), isChanged_(changedFlag)
         {
             if (ctrlThing_) {
                 std::stringstream mySteam;
+                mySteam.precision(2);
                 mySteam << *ctrlThing;
 
                 *text_.GetRealString() = mySteam.str();
@@ -474,11 +524,12 @@ class ProgressBar : public CustomButton<double> {
         double maxValue_;
 
     public:
-        ProgressBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color, const MyColor& progressColor, double* valueToCtrl, double minValue, double maxValue) :
-        CustomButton(x, y, width, height, color, 0, progressColor, valueToCtrl),
+        ProgressBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, double* valueToCtrl, double minValue, double maxValue) :
+        CustomButton(x, y, width, height, valueToCtrl),
         minValue_(minValue), maxValue_(maxValue)
         {
-
+            widgetSkin_  = SkinIdxs::BarBackground;
+            clickedSkin_ = SkinIdxs::BarProgress;
         }
 
         virtual void Draw([[maybe_unused]] const int64_t& time) override {
@@ -489,7 +540,7 @@ class ProgressBar : public CustomButton<double> {
             Vector newXY = ConvertXY(0, 0);
             Rectangle realWindowRect({width_ * int64_t(percent) / 100, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
 
-            realWindowRect.Draw(ptrToRealWdw_, clickColor_);  
+            realWindowRect.Draw(ptrToRealWdw_, skinManager_->GetTexture(clickedSkin_));  
 
             std::stringstream stream;
             stream << percent << "%";

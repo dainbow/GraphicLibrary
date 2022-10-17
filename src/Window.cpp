@@ -2,12 +2,15 @@
 
 #include <iostream>
 
-RealWindow::RealWindow(uint32_t width, uint32_t height, const MyColor& color) :
-Window(0, 0, width, height, color),
+RealWindow::RealWindow(uint32_t width, uint32_t height, SkinManager* skinManager) :
+Window(0, 0, width, height),
 realWindow_(sf::VideoMode(width, height), "Window"),
-lastPressedTime_(0), lastKeyPressedTime_(0), lastReleasedTime_(0), lastTickTime_(0)
+lastPressedTime_(0), lastKeyPressedTime_(0), lastReleasedTime_(0), lastTickTime_(0), lastMoveTime_(0)
 {   
+    widgetSkin_ = SkinIdxs::RealWindowBackground;
+
     ptrToRealWdw_ = &realWindow_;
+    skinManager_ = skinManager;
 };
 
 

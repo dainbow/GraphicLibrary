@@ -17,6 +17,8 @@ struct ConstColor : public Texture {
     {};
 
     MyColor GetColor([[maybe_unused]] const Vector3D& point) const override {
+        (const_cast<MyColor*>(&color_))->ClampUints();
+
         return color_;
     };
 };
@@ -49,7 +51,7 @@ struct Squares : public Texture {
         }
     };
 
-    private:
+    public:
         const Texture* oddTexture_;
         const Texture* evenTexture_;
 

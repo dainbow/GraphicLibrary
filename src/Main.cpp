@@ -1,13 +1,14 @@
 #include "Main.hpp"
 
 int main() {
-    RealWindow mainWindow(1000, 500, 0x8a7f8e00);
+    SkinManager manager("default");
+    RealWindow mainWindow(1000, 500, &manager);
 
     //
     // TRACER OBJECTLIST CONFIG
     //
 
-    List* objectsList = new List(520, 20, 300, 460, 0xffa8af00, 0x1e90ff00);
+    List* objectsList = new List(520, 20, 250, 400);
     mainWindow += objectsList;
 
     //
@@ -20,7 +21,7 @@ int main() {
     // TracerWindow Init
     //
 
-    Window* tracerWindow = new Window(20, 20, 400, 400, 0);
+    Window* tracerWindow = new Window(20, 20, 400, 400);
     *tracerWindow += tracer;
     mainWindow += tracerWindow;
 
@@ -28,14 +29,14 @@ int main() {
     // ProgressBar Init
     //
 
-    ProgressBar* traceProgress = new ProgressBar(20, 440, 400, 30, 0, 0x13880800, &tracer->renderRow_, -double(tracer->height_) / 2, double(tracer->height_) / 2);
+    ProgressBar* traceProgress = new ProgressBar(20, 440, 400, 30, &tracer->renderRow_, -double(tracer->height_) / 2, double(tracer->height_) / 2);
     mainWindow += traceProgress;
 
     //
     // GRAPHICS DROPLIST CONFIG
     //
 
-    DropList* graphicsButton = new DropList(0, 0, 70, 30, 0, 0, 0x00FF0000);
+    DropList* graphicsButton = new DropList(0, 0, 70, 30);
     graphicsButton->SetText("Modes", 0xfefe2200);
     mainWindow += graphicsButton;
 
@@ -46,7 +47,7 @@ int main() {
     // ButtonToAddObjects CONFIG
     //
 
-    DropList* addObject = new DropList(70, 0, 70, 30, 0, 0, 0x00FF0000);
+    DropList* addObject = new DropList(70, 0, 70, 30);
     addObject->SetText("Add", 0xfefe2200);
     mainWindow += addObject;
 
@@ -54,7 +55,7 @@ int main() {
     // ButtonToAddSphere CONFIG
     //
 
-    CustomButton<Raytracer>* buttonToAddSphere = new CustomButton<Raytracer>(840, 20, 70, 30, 0, 0, 0xffff0000, tracer);
+    CustomButton<Raytracer>* buttonToAddSphere = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
     buttonToAddSphere->onClick_ += new FuncCaller<CustomButton<Raytracer>, Vector>(buttonToAddSphere, AddSphereToTracer);
     buttonToAddSphere->SetText("Sphere", 0xfefe2200);
     *addObject += buttonToAddSphere;
@@ -63,7 +64,7 @@ int main() {
     // ButtonToAddPlane Config
     //
 
-    CustomButton<Raytracer>* buttonToAddPlane = new CustomButton<Raytracer>(840, 20, 70, 30, 0, 0, 0xffff0000, tracer);
+    CustomButton<Raytracer>* buttonToAddPlane = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
     buttonToAddPlane->onClick_ += new FuncCaller<CustomButton<Raytracer>, Vector>(buttonToAddPlane, AddPlaneToTracer);
     buttonToAddPlane->SetText("Plane", 0xfefe2200);
     *addObject += buttonToAddPlane;
@@ -72,7 +73,7 @@ int main() {
     // LOW GRAPHICS BUTTON CONFIG
     //
 
-    CustomButton<ControlGraphics>* lowGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0x99FF9900, &control);
+    CustomButton<ControlGraphics>* lowGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     lowGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(lowGraphics, LowGraphicsOnClick);
     lowGraphics->SetText("Low", 0xfefe2200);
     *graphicsButton += lowGraphics;
@@ -81,7 +82,7 @@ int main() {
     // MID GRAPHICS BUTTON CONFIG
     //
 
-    CustomButton<ControlGraphics>* midGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0xFFA81200, &control);
+    CustomButton<ControlGraphics>* midGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     midGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(midGraphics, MidGraphicsOnClick);
     midGraphics->SetText("Middle", 0xfefe2200);
     *graphicsButton += midGraphics;
@@ -90,7 +91,7 @@ int main() {
     // HIGH GRAPHICS BUTTON CONFIG
     //
 
-    CustomButton<ControlGraphics>* highGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, 0, 0, 0xff2b2b00, &control);
+    CustomButton<ControlGraphics>* highGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     highGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(highGraphics, HighGraphicsOnClick);
     highGraphics->SetText("High", 0xfefe2200);
     *graphicsButton += highGraphics;
@@ -140,7 +141,8 @@ int main() {
     sph3->name_ = "BigGlassSphere";
     *tracer += sph3;
 
-    Sphere* sph5 = new Sphere({5, 4.9, 60}, 10, &pinkMirror);
+    Sphere* sph5 = new Sphere({5, 4.9, 60}, 10, &squareScat);
+
     sph5->name_ = "BigPinkSphere";
     *tracer += sph5;
 
@@ -152,26 +154,26 @@ int main() {
     // Promo config
     //
 
-    Promotion* promo1 = new Promotion();
-    mainWindow += promo1;
+    // Promotion* promo1 = new Promotion();
+    // mainWindow += promo1;
 
-    Promotion* promo2 = new Promotion();
-    mainWindow += promo2;
+    // Promotion* promo2 = new Promotion();
+    // mainWindow += promo2;
 
-    Promotion* promo3 = new Promotion();
-    mainWindow += promo3;
+    // Promotion* promo3 = new Promotion();
+    // mainWindow += promo3;
 
-    Promotion* promo4 = new Promotion();
-    mainWindow += promo4;
+    // Promotion* promo4 = new Promotion();
+    // mainWindow += promo4;
 
-    Promotion* promo5 = new Promotion();
-    mainWindow += promo5;
+    // Promotion* promo5 = new Promotion();
+    // mainWindow += promo5;
 
-    Promotion* promo6 = new Promotion();
-    mainWindow += promo6;
+    // Promotion* promo6 = new Promotion();
+    // mainWindow += promo6;
 
-    Promotion* promo7 = new Promotion();
-    mainWindow += promo7;
+    // Promotion* promo7 = new Promotion();
+    // mainWindow += promo7;
 
 
     while (mainWindow.IsOpen()) {

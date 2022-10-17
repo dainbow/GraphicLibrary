@@ -11,7 +11,7 @@ class ImageWindow : public Window {
         Image image_;
 
         ImageWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
-        Window(x, y, width, height, 0),
+        Window(x, y, width, height),
         image_(width, height)
         {
 
@@ -34,8 +34,8 @@ class FlexImageWindow : public ImageWindow {
         imageXMax_(0), imageYMax_(0),
         imageX_(0), imageY_(0),
         imageWidth_(width), imageHeight_(height),
-        yScroll_(new ScrollBar(width - defaultBarWidth, 0, defaultBarWidth, height, 0xFF000000, &imageY_, &imageYMin_, &imageYMax_)),
-        xScroll_(new ScrollBar(0, height - defaultBarWidth, defaultBarWidth, height, 0xFF000000, &imageX_, &imageXMin_, &imageXMax_))
+        yScroll_(new ScrollBar(width - defaultBarWidth, 0, defaultBarWidth, height, &imageY_, &imageYMin_, &imageYMax_)),
+        xScroll_(new ScrollBar(0, height - defaultBarWidth, defaultBarWidth, height, &imageX_, &imageXMin_, &imageXMax_))
         {
             *this += yScroll_;
             
@@ -63,7 +63,8 @@ class FlexImageWindow : public ImageWindow {
 
         virtual void Draw([[maybe_unused]] const int64_t& time) override {
             image_.rotation_ = GetRotation();
-            image_.Draw(ptrToRealWdw_, ConvertXY(0, 0), ConvertXY(int64_t(imageX_), int64_t(imageY_)), imageWidth_, imageHeight_);
+
+            image_.Draw(ptrToRealWdw_, ConvertXY(0, 0), Vector(imageX_, imageY_), imageWidth_, imageHeight_);
         }
 
     private:
@@ -86,7 +87,7 @@ class FlexImageWindow : public ImageWindow {
 const uint32_t defaultPromoWidth  = 100;
 const uint32_t defaultPromoHeight = 100;
 
-const uint32_t promoAmount = 5;
+const uint32_t promoAmount = 6;
 const int64_t defaultDelay = 100;
 const float defaultPromoRotation = float((M_PI / 180.0) * 4.0);
 

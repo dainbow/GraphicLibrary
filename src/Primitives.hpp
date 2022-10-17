@@ -17,7 +17,7 @@ class Rectangle {
 
         float rotation_ = 0;
 
-        void Draw(sf::RenderWindow* window, const MyColor& color) {
+        void Draw(sf::RenderWindow* window, sf::Texture* texture) {
             assert(window);
 
             sf::Vector2f sizesVec = {float(width_), float(height_)};
@@ -25,10 +25,7 @@ class Rectangle {
 
             rect.setPosition({float(x_), float(y_)});
 
-            sf::Color curColor(color.red_, color.green_, color.blue_);
-
-            rect.setFillColor(curColor);
-
+            rect.setTexture(texture);
             rect.setRotation(float((rotation_ * 180.0) / M_PI));
             window->draw(rect);
         }

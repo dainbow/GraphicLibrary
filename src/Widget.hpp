@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "SkinManager.hpp"
 #include "Color.hpp"
 #include "Event.hpp"
 #include "Primitives.hpp"
@@ -12,9 +13,11 @@ class Widget {
     protected:
         Widget* parent_;
         sf::RenderWindow* ptrToRealWdw_;
+        SkinManager*      skinManager_;
 
         float rotation_;
     public:
+        SkinIdxs widgetSkin_;
         int64_t width_;
         int64_t height_;
 
@@ -44,6 +47,10 @@ class Widget {
 
         virtual void SetRealWindowPtr(sf::RenderWindow* newPtr) {
             ptrToRealWdw_ = newPtr;
+        }
+
+        virtual void SetSkinManager(SkinManager* skinManager) {
+            skinManager_ = skinManager;
         }
 
         virtual bool IsClicked(const Vector& coords) = 0;
@@ -129,7 +136,9 @@ class Widget {
 
         Widget(uint32_t shiftX, uint32_t shiftY, int64_t width, int64_t height) :
         parent_(nullptr), ptrToRealWdw_(nullptr),
+        skinManager_(nullptr),
         rotation_(0),
+        widgetSkin_(SkinIdxs::NoSkin),
         width_(width), height_(height),
         shiftX_(shiftX), shiftY_(shiftY),
         onMove_(), onClick_(), onTick_(), onRelease_(), onKeyboard_(),

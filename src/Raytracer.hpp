@@ -34,6 +34,9 @@ class PlaneInfo;
 void DeleteSphere(CustomButton<SphereInfo>* obj, const Vector& coords);
 void DeletePlane(CustomButton<PlaneInfo>* obj, const Vector& coords);
 
+void AddMaterialInfo(DynamicWindow* curWindow, Material* material, bool* isChanged);
+void AddTextureInfo(DynamicWindow* curWindow, const Texture* texture, bool* isChanged);
+
 class SphereInfo : public DynamicWindow {
     private:
         Sphere* spherePtr_;
@@ -47,45 +50,53 @@ class SphereInfo : public DynamicWindow {
         SphereInfo(const SphereInfo& sphereInfo) = default;
         SphereInfo& operator=(const SphereInfo& sphereInfo) = default;
 
-        SphereInfo(uint32_t x, uint32_t y, const MyColor& color, Sphere* spherePtr, bool* isChanged) :
-        DynamicWindow(x, y, color),
+        SphereInfo(uint32_t x, uint32_t y, Sphere* spherePtr, bool* isChanged) :
+        DynamicWindow(x, y),
         spherePtr_(spherePtr),
         isChanged_(isChanged)
-        {
-            Window* nameDeleteWindow = new Window(0, 0, 240, 30, 0);
+        {            
+            Window* nameDeleteWindow = new Window(0, 0, 230, 30);
             *this += nameDeleteWindow;
 
-            *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 200, 30, 0x42aaff00, 0, 0xffffff00, 0, &spherePtr_->name_, 0);
+            *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 180, 30, &spherePtr_->name_, 0);
 
-            CustomButton<SphereInfo>* deleteButton    = new CustomButton<SphereInfo>(200, 0, 40, 30, 0xFF000000, 0, 0, this);
+            CustomButton<SphereInfo>* deleteButton    = new CustomButton<SphereInfo>(180, 0, 50, 30, this);
             deleteButton->onClick_ += new FuncCaller<CustomButton<SphereInfo>, Vector>(deleteButton, &DeleteSphere);
+            deleteButton->hoveredSkin_ = SkinIdxs::ButtonHovering;
+            deleteButton->SetText("RM", 0xffffff00);
+            
             *nameDeleteWindow += deleteButton;
 
-            Window* coordsWindow = new Window(0, 0, 240, 30, 0);
+            Window* coordsWindow = new Window(0, 0, 240, 30);
             *this += coordsWindow;
 
-            CustomButton<int>* xLabel = new CustomButton<int>(0, 0, 30, 30, 0, 0, 0, 0);
+            CustomButton<int>* xLabel = new CustomButton<int>(0, 0, 30, 30, nullptr);
             xLabel->SetText("x:", 0xffffff00);
             *coordsWindow += xLabel;
-            *coordsWindow += new CtrlTextField<double>(30, 0, 50, 30, 0x42aaff00, 0, 0xffffff00, 0, &spherePtr_->center_.x_, isChanged_);
+            *coordsWindow += new CtrlTextField<double>(30, 0, 50, 30, &spherePtr_->center_.x_, isChanged_);
             
-            CustomButton<int>* yLabel = new CustomButton<int>(80, 0, 30, 30, 0, 0, 0, 0);
+            CustomButton<int>* yLabel = new CustomButton<int>(80, 0, 30, 30, nullptr);
             yLabel->SetText("y:", 0xffffff00);
             *coordsWindow += yLabel;
-            *coordsWindow += new CtrlTextField<double>(110, 0, 50, 30, 0x42aaff00, 0, 0xffffff00, 0, &spherePtr_->center_.y_, isChanged_);
+            *coordsWindow += new CtrlTextField<double>(110, 0, 50, 30, &spherePtr_->center_.y_, isChanged_);
             
-            CustomButton<int>* zLabel = new CustomButton<int>(160, 0, 30, 30, 0, 0, 0, 0);
+            CustomButton<int>* zLabel = new CustomButton<int>(160, 0, 30, 30, nullptr);
             zLabel->SetText("z:", 0xffffff00);
             *coordsWindow += zLabel;
-            *coordsWindow += new CtrlTextField<double>(190, 0, 50, 30, 0x42aaff00, 0, 0xffffff00, 0, &spherePtr_->center_.z_, isChanged_);
+            *coordsWindow += new CtrlTextField<double>(190, 0, 50, 30, &spherePtr_->center_.z_, isChanged_);
             
-            Window* radiusWindow = new Window(0, 0, 80, 30, 0);
+            Window* radiusWindow = new Window(0, 0, 80, 30);
             *this += radiusWindow;
 
-            CustomButton<int>* rLabel = new CustomButton<int>(0, 0, 30, 30, 0, 0, 0, 0);
+            CustomButton<int>* rLabel = new CustomButton<int>(0, 0, 30, 30, nullptr);
             rLabel->SetText("R:", 0xffffff00);
             *radiusWindow += rLabel;
-            *radiusWindow += new CtrlTextField<double>(30, 0, 50, 30, 0x42aaff00, 0, 0xffffff00, 0, &spherePtr_->radius_, isChanged_);
+            *radiusWindow += new CtrlTextField<double>(30, 0, 50, 30, &spherePtr_->radius_, isChanged_);
+        
+            AddMaterialInfo(this, const_cast<Material*>(spherePtr->objectMaterial_), isChanged_);
+
+            Window* fillerWindow = new Window(0, 0, 230, 10);
+            *this += fillerWindow;
         }
 };
 
@@ -102,42 +113,49 @@ class PlaneInfo : public DynamicWindow {
         PlaneInfo(const PlaneInfo& planeInfo) = default;
         PlaneInfo& operator=(const PlaneInfo& planeInfo) = default;
 
-        PlaneInfo(uint32_t x, uint32_t y, const MyColor& color, Plane* planePtr, bool* isChanged) :
-        DynamicWindow(x, y, color),
+        PlaneInfo(uint32_t x, uint32_t y, Plane* planePtr, bool* isChanged) :
+        DynamicWindow(x, y),
         planePtr_(planePtr),
         isChanged_(isChanged)
         {
-            Window* nameDeleteWindow = new Window(0, 0, 240, 30, 0);
+            Window* nameDeleteWindow = new Window(0, 0, 220, 30);
             *this += nameDeleteWindow;
 
-            *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 200, 30, 0x42aaff00, 0, 0xffffff00, 0, &planePtr_->name_, 0);
+            *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 180, 30, &planePtr_->name_, 0);
             
-            CustomButton<PlaneInfo>* deleteButton    = new CustomButton<PlaneInfo>(200, 0, 40, 30, 0xFF000000, 0, 0, this);
+            CustomButton<PlaneInfo>* deleteButton    = new CustomButton<PlaneInfo>(180, 0, 50, 30, this);
             deleteButton->onClick_ += new FuncCaller<CustomButton<PlaneInfo>, Vector>(deleteButton, &DeletePlane);
+            deleteButton->SetText("RM", 0xffffff00);
+            deleteButton->hoveredSkin_ = SkinIdxs::ButtonHovering;
             *nameDeleteWindow += deleteButton;
 
-            Window* mainWindow = new Window(0, 0, 240, 30, 0);
+            Window* mainWindow = new Window(0, 0, 240, 30);
             *this += mainWindow;
 
-            CustomButton<int>* aLabel = new CustomButton<int>(0, 0, 20, 30, 0, 0, 0, 0);
+            CustomButton<int>* aLabel = new CustomButton<int>(0, 0, 20, 30, nullptr);
             aLabel->SetText("A", 0xffffff00);
             *mainWindow += aLabel;
-            *mainWindow += new CtrlTextField<double>(20, 0, 40, 30, 0x42aaff00, 0, 0xffffff00, 0, &planePtr->plane_.array_[0][0], isChanged_);
+            *mainWindow += new CtrlTextField<double>(20, 0, 40, 30, &planePtr->plane_.array_[0][0], isChanged_);
         
-            CustomButton<int>* bLabel = new CustomButton<int>(60, 0, 20, 30, 0, 0, 0, 0);
+            CustomButton<int>* bLabel = new CustomButton<int>(60, 0, 20, 30, nullptr);
             bLabel->SetText("B", 0xffffff00);
             *mainWindow += bLabel;
-            *mainWindow += new CtrlTextField<double>(80, 0, 40, 30, 0x42aaff00, 0, 0xffffff00, 0, &planePtr->plane_.array_[0][1], isChanged_);
+            *mainWindow += new CtrlTextField<double>(80, 0, 40, 30, &planePtr->plane_.array_[0][1], isChanged_);
 
-            CustomButton<int>* cLabel = new CustomButton<int>(120, 0, 20, 30, 0, 0, 0, 0);
+            CustomButton<int>* cLabel = new CustomButton<int>(120, 0, 20, 30, nullptr);
             cLabel->SetText("C", 0xffffff00);
             *mainWindow += cLabel;
-            *mainWindow += new CtrlTextField<double>(140, 0, 40, 30, 0x42aaff00, 0, 0xffffff00, 0, &planePtr->plane_.array_[0][2], isChanged_);
+            *mainWindow += new CtrlTextField<double>(140, 0, 40, 30, &planePtr->plane_.array_[0][2], isChanged_);
 
-            CustomButton<int>* dLabel = new CustomButton<int>(180, 0, 20, 30, 0, 0, 0, 0);
+            CustomButton<int>* dLabel = new CustomButton<int>(180, 0, 20, 30, nullptr);
             dLabel->SetText("D", 0xffffff00);
             *mainWindow += dLabel;
-            *mainWindow += new CtrlTextField<double>(200, 0, 40, 30, 0x42aaff00, 0, 0xffffff00, 0, &planePtr->plane_.array_[0][3], isChanged_);
+            *mainWindow += new CtrlTextField<double>(200, 0, 40, 30, &planePtr->plane_.array_[0][3], isChanged_);
+        
+            AddMaterialInfo(this, const_cast<Material*>(planePtr->objectMaterial_), isChanged_);
+
+            Window* fillerWindow = new Window(0, 0, 230, 10);
+            *this += fillerWindow;
         }
 };
 
@@ -229,7 +247,6 @@ class Raytracer : public FlexImageWindow {
             if (leastObject == UINT32_MAX) {
                 double convertedY = 0.5 * (Normalise(curRay.vector_).y_ + 1.0);
 
-                // return 0;
                 return MyColor(1.0, 1.0, 1.0) * (1.0 - convertedY) + MyColor(0.5, 0.7, 1.0) * convertedY;
             }
 
@@ -254,10 +271,10 @@ class Raytracer : public FlexImageWindow {
                 const std::type_info& curObjInfo = typeid(*curObject);
 
                 if (strstr(curObjInfo.name(), "Sphere")) {
-                    *listToFill += new SphereInfo(0, 0, 0x00FF0000, (Sphere*)curObject, &isChanged_);
+                    *listToFill += new SphereInfo(0, 0, (Sphere*)curObject, &isChanged_);
                 }
                 else if (strstr(curObjInfo.name(), "Plane")) {
-                    *listToFill += new PlaneInfo(0, 0, 0x00FF0000, (Plane*)curObject, &isChanged_);
+                    *listToFill += new PlaneInfo(0, 0, (Plane*)curObject, &isChanged_);
                 }
             }
         }
@@ -291,7 +308,7 @@ class Raytracer : public FlexImageWindow {
 
         void SetLowGraphics() {
             SuperSamplingCoef_ = 1;
-            MaxRecursionDepth_ = 1;
+            MaxRecursionDepth_ = 2;
             
             isChanged_ = 1;
             graphSettings_ = TracerGraphics::LowGraphics;

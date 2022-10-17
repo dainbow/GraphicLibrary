@@ -10,14 +10,13 @@ class Window : public Widget {
 
     protected:
         ChildrenManager manager_;
-
-        MyColor backColor_;
     public:
-        Window(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color) :
+        Window(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
         Widget(x, y, width, height),
-        manager_(),
-        backColor_(color)
+        manager_()
         {
+            widgetSkin_ = SkinIdxs::WindowBackground;
+
             onTick_  += new MethodCaller<ChildrenManager, int64_t>(&manager_, &ChildrenManager::TriggerTick);
             onClick_ += new MethodCaller<ChildrenManager, Vector>(&manager_, &ChildrenManager::TriggerClick);
             onMove_  += new MethodCaller<ChildrenManager, Vector>(&manager_, &ChildrenManager::TriggerMove);
@@ -28,15 +27,14 @@ class Window : public Widget {
         virtual void Draw([[maybe_unused]] const int64_t& time) override {
             Vector newXY = ConvertXY(0, 0);
 
-            // std::cout << newXY << std::endl;
             Rectangle realWindowRect({width_, height_, int64_t(newXY.x_), int64_t(newXY.y_), GetRotation()});
-
-            realWindowRect.Draw(ptrToRealWdw_, backColor_);  
+            realWindowRect.Draw(ptrToRealWdw_, skinManager_->GetTexture(widgetSkin_));  
         }
 
         virtual void operator+=(Widget* newWidget) {
             newWidget->SetParent(this);
             newWidget->SetRealWindowPtr(ptrToRealWdw_);
+            newWidget->SetSkinManager(skinManager_);
 
             manager_ += newWidget;
         }
@@ -44,8 +42,9 @@ class Window : public Widget {
         void operator-=(Widget* widgetToDisconnect) {
             manager_ -= widgetToDisconnect;
 
-            widgetToDisconnect->SetParent(nullptr);
+            widgetToDisconnect->SetSkinManager(nullptr);
             widgetToDisconnect->SetRealWindowPtr(nullptr);
+            widgetToDisconnect->SetParent(nullptr);
         }
 
         virtual bool IsClicked(const Vector& vec) override {
@@ -71,6 +70,14 @@ class Window : public Widget {
             }
         }
 
+        virtual void SetSkinManager(SkinManager* skinManager) override {
+            skinManager_ = skinManager;
+
+            for (auto& curChild : *manager_.GetWidgetsList()) {
+                curChild->SetSkinManager(skinManager);
+            }
+        }
+
         void Clear() {
             manager_.Clear();
         }
@@ -92,8 +99,9 @@ class RealWindow final : public Window {
         int64_t lastKeyPressedTime_;
         int64_t lastReleasedTime_;
         int64_t lastTickTime_;
+        int64_t lastMoveTime_;
     public:
-        RealWindow(uint32_t width, uint32_t height, const MyColor& color);
+        RealWindow(uint32_t width, uint32_t height, SkinManager* skinManager);
 
         void PollEvent() {
             sf::Event curEvent;
@@ -107,10 +115,18 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseMoved: {
-                    // Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
+                    if ((GetTimeMiliseconds() - lastMoveTime_) < TimeBetweenTicks) 
+                        break;
 
-                    // onMove_(moveCoords);
+                    if ((curEvent.mouseMove.y < 0) || (curEvent.mouseButton.y > height_)) {
+                        break;
+                    }
 
+                    Vector moveCoords = {double(curEvent.mouseMove.x), double(curEvent.mouseMove.y)};
+
+                    onMove_(moveCoords);
+
+                    lastMoveTime_ = GetTimeMiliseconds();
                     break;
                 }
 
@@ -208,9 +224,10 @@ class DynamicWindow : public Window {
     protected:
 
     public:
-        DynamicWindow(uint32_t x, uint32_t y, const MyColor& color) :
-        Window(x, y, 0, 0, color)
-        {}
+        DynamicWindow(uint32_t x, uint32_t y) :
+        Window(x, y, 0, 0)
+        {
+        }
 
         void operator+=(Widget* windowToAdd) override {
             windowToAdd->shiftY_ = uint32_t(height_);
@@ -317,8 +334,8 @@ class LimitedWindow : public Window {
             Window::operator+=(newWidget);
         }
 
-        LimitedWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height, const MyColor& color) :
-        Window(x, y, width, height, color),
+        LimitedWindow(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
+        Window(x, y, width, height),
         curPointer_(0),
         minHeight_(0), maxHeight_(0)
         {

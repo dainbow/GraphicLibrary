@@ -70,6 +70,7 @@
         "cinttypes": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "strstream": "cpp"
     }
 }
