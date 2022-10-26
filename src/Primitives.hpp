@@ -123,14 +123,14 @@ class Text {
             return &realString_;
         }
 
-        void Draw(sf::RenderWindow* window, const Vector& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
+        void Draw(sf::RenderWindow* window, const CordsPair& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
             assert(window);
             
             sf::Font font;
             font.loadFromFile("./fonts/arial.ttf");
 
             sf::Text text(realString_, font);
-            text.setPosition({float(x0y0.x_), float(x0y0.y_)});
+            text.setPosition({x0y0.x, x0y0.y});
 
             text.setCharacterSize(uint32_t(double(height) * TextScalar));
             text.setStyle(sf::Text::Regular);

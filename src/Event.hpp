@@ -96,37 +96,4 @@ class AddMethodCaller : public BaseHandler<TArguments> {
         TAddMethod callMethod_;
 };
 
-template <class TArguments>
-class Event {
-    private:
-        std::list<BaseHandler<TArguments>*> handlers;
-    
-    public:
-        Event() :
-        handlers() 
-        {}    
-
-        ~Event() {
-            for (auto& curHandler : handlers) {
-                delete curHandler;
-            }
-        }
-
-        void operator() (const TArguments& args) {
-            for (auto& curHandler : handlers) {
-                curHandler->Call(args);
-            }
-        }
-
-        void operator+=(BaseHandler<TArguments>* handler) {
-            handlers.push_back(handler);
-        }
-
-        void PushFront(BaseHandler<TArguments>* handler) {
-            handlers.push_front(handler);
-        }
-
-        void Clear() {
-            handlers.clear();
-        }
-};  
+// pimpl, компонентное программирование, Smalltalk, ECS - всё управляется сообщениями и подписками. 

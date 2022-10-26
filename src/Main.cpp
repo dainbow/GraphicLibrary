@@ -56,7 +56,7 @@ int main() {
     //
 
     CustomButton<Raytracer>* buttonToAddSphere = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
-    buttonToAddSphere->onClick_ += new FuncCaller<CustomButton<Raytracer>, Vector>(buttonToAddSphere, AddSphereToTracer);
+    buttonToAddSphere->SetHandler(new FuncCaller<CustomButton<Raytracer>, CordsPair>(buttonToAddSphere, AddSphereToTracer));
     buttonToAddSphere->SetText("Sphere", 0xfefe2200);
     *addObject += buttonToAddSphere;
 
@@ -65,7 +65,7 @@ int main() {
     //
 
     CustomButton<Raytracer>* buttonToAddPlane = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
-    buttonToAddPlane->onClick_ += new FuncCaller<CustomButton<Raytracer>, Vector>(buttonToAddPlane, AddPlaneToTracer);
+    buttonToAddPlane->SetHandler(new FuncCaller<CustomButton<Raytracer>, CordsPair>(buttonToAddPlane, AddPlaneToTracer));
     buttonToAddPlane->SetText("Plane", 0xfefe2200);
     *addObject += buttonToAddPlane;
 
@@ -74,7 +74,7 @@ int main() {
     //
 
     CustomButton<ControlGraphics>* lowGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
-    lowGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(lowGraphics, LowGraphicsOnClick);
+    lowGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(lowGraphics, LowGraphicsOnClick));
     lowGraphics->SetText("Low", 0xfefe2200);
     *graphicsButton += lowGraphics;
 
@@ -83,7 +83,7 @@ int main() {
     //
 
     CustomButton<ControlGraphics>* midGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
-    midGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(midGraphics, MidGraphicsOnClick);
+    midGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(midGraphics, MidGraphicsOnClick));
     midGraphics->SetText("Middle", 0xfefe2200);
     *graphicsButton += midGraphics;
 
@@ -92,7 +92,7 @@ int main() {
     //
 
     CustomButton<ControlGraphics>* highGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
-    highGraphics->onClick_ += new FuncCaller<CustomButton<ControlGraphics>, Vector>(highGraphics, HighGraphicsOnClick);
+    highGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(highGraphics, HighGraphicsOnClick));
     highGraphics->SetText("High", 0xfefe2200);
     *graphicsButton += highGraphics;
 
@@ -185,7 +185,7 @@ int main() {
     }
 }
 
-void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec) {
+void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec)) {
         return;
     }
@@ -196,12 +196,12 @@ void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec
 
     button->GetContext()->tracer_->SetLowGraphics();
 
-    button->isClicked_ = 1;
-    button->GetContext()->midButton_->isClicked_  = 0;
-    button->GetContext()->highButton_->isClicked_ = 0;
+    button->SetClickedState(1);
+    button->GetContext()->midButton_->SetClickedState(0);
+    button->GetContext()->highButton_->SetClickedState(0);
 }
 
-void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec) {
+void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec)) {
         return;
     }
@@ -212,12 +212,12 @@ void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec
 
     button->GetContext()->tracer_->SetMidGraphics();
 
-    button->isClicked_ = 1;
-    button->GetContext()->lowButton_->isClicked_  = 0;
-    button->GetContext()->highButton_->isClicked_ = 0;
+    button->SetClickedState(1);
+    button->GetContext()->lowButton_->SetClickedState(0);
+    button->GetContext()->highButton_->SetClickedState(0);
 }
 
-void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec) {
+void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec)) {
         return;
     }
@@ -228,12 +228,12 @@ void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& ve
 
     button->GetContext()->tracer_->SetHighGraphics();
 
-    button->isClicked_ = 1;
-    button->GetContext()->lowButton_->isClicked_ = 0;
-    button->GetContext()->midButton_->isClicked_ = 0;
+    button->SetClickedState(1);
+    button->GetContext()->lowButton_->SetClickedState(0);
+    button->GetContext()->midButton_->SetClickedState(0);
 }
 
-void AddSphereToTracer(CustomButton<Raytracer>* button, const Vector& vec) {
+void AddSphereToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec))
         return;
 
@@ -243,7 +243,7 @@ void AddSphereToTracer(CustomButton<Raytracer>* button, const Vector& vec) {
     *button->GetContext() += new Sphere({0, 0, 0}, 0, whiteScat);
 }
 
-void AddPlaneToTracer(CustomButton<Raytracer>* button, const Vector& vec) {
+void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec))
         return;
 
