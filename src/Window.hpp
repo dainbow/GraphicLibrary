@@ -31,8 +31,8 @@ class Window : public Widget {
         virtual bool IsClicked(const CordsPair& vec) override {
             CordsPair realVec = ConvertRealXY(vec);
 
-            return ((realVec.x >= 0)  && (realVec.x <= width_) && 
-                    (realVec.y >= 0)  && (realVec.y <= height_));
+            return ((realVec.x >= 0)  && (realVec.x <= GetWidth()) && 
+                    (realVec.y >= 0)  && (realVec.y <= GetHeight()));
         }
 
         virtual void OnClick(const Event& curEvent) override {
@@ -41,17 +41,16 @@ class Window : public Widget {
             manager_.TriggerClick(curEvent);
         }
 
-        virtual void Draw() override {
-            CordsPair newXY = ConvertXY({0, 0});
-
-            Rectangle realWindowRect({width_, height_, int64_t(newXY.x), int64_t(newXY.y), GetRotation()});
-            realWindowRect.Draw(ptrToRealWdw_, skinManager_->GetTexture(widgetSkin_));  
+        virtual void ReDraw() override {
+            Rectangle realWindowRect({GetWidth(), GetHeight(), 0, 0, 0});
+            realWindowRect.Draw(widgetContainer_, skinManager_->GetTexture(widgetSkin_));  
         }
 
         virtual void OnTick(const Event& curEvent) override {
-            Widget::OnTick(curEvent);
-
+            ProcessRedraw();
             manager_.TriggerTick(curEvent);
+
+            PlaceTexture();
         }
 
         virtual void OnRelease(const Event& curEvent) override {
@@ -120,7 +119,7 @@ class RealWindow final : public Window {
         int64_t lastTickTime_;
         int64_t lastMoveTime_;
     public:
-        RealWindow::RealWindow(uint32_t width, uint32_t height, SkinManager* skinManager) :
+        RealWindow(uint32_t width, uint32_t height, SkinManager* skinManager) :
         Window(0, 0, width, height),
         realWindow_(sf::VideoMode(width, height), "Window"),
         lastPressedTime_(0), lastKeyPressedTime_(0), lastReleasedTime_(0), lastTickTime_(0), lastMoveTime_(0)
@@ -135,6 +134,13 @@ class RealWindow final : public Window {
             if (realWindow_.isOpen()) {
                 realWindow_.close();
             }
+        }
+
+        virtual void PlaceTexture() override {
+            sf::Sprite sprite(widgetContainer_.getTexture());
+            sprite.setPosition({float(GetShiftX()), float(GetShiftY())});
+
+            realWindow_.draw(sprite);
         }
 
         virtual bool IsClicked([[maybe_unused]] const CordsPair& vec) override {
@@ -169,48 +175,48 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseMoved: {
-                    if ((GetTimeMiliseconds() - lastMoveTime_) < TimeBetweenTicks) 
-                        break;
+                    // if ((GetTimeMiliseconds() - lastMoveTime_) < TimeBetweenTicks) 
+                    //     break;
 
-                    if ((curEvent.mouseMove.y < 0) || (curEvent.mouseButton.y > height_)) {
+                    if ((curEvent.mouseMove.y < 0) || (curEvent.mouseMove.y > GetHeight())) {
                         break;
                     }
 
                     OnMove(curEvent);
 
-                    lastMoveTime_ = GetTimeMiliseconds();
+                    // lastMoveTime_ = GetTimeMiliseconds();
                     break;
                 }
 
                 case sf::Event::MouseButtonPressed: {
-                    if ((GetTimeMiliseconds() - lastPressedTime_) < TimeBetweenClicks)
-                        break;
+                    // if ((GetTimeMiliseconds() - lastPressedTime_) < TimeBetweenClicks)
+                    //     break;
 
                     OnClick(curEvent);
 
-                    lastPressedTime_ = GetTimeMiliseconds();
+                    // lastPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
 
                 case sf::Event::MouseButtonReleased: {
-                    if ((GetTimeMiliseconds() - lastReleasedTime_) < TimeBetweenKeys)
-                        break;
+                    // if ((GetTimeMiliseconds() - lastReleasedTime_) < TimeBetweenKeys)
+                    //     break;
 
                     OnRelease(curEvent);
 
-                    lastReleasedTime_ = GetTimeMiliseconds();
+                    // lastReleasedTime_ = GetTimeMiliseconds();
                     break;
                 }
 
                 case sf::Event::KeyPressed: {
-                    if ((GetTimeMiliseconds() - lastKeyPressedTime_) < TimeBetweenKeys)
-                        break;
+                    // if ((GetTimeMiliseconds() - lastKeyPressedTime_) < TimeBetweenKeys)
+                    //     break;
 
-                    std::cout << uint32_t(curEvent.key.code) << std::endl;
+                    // std::cout << uint32_t(curEvent.key.code) << std::endl;
 
                     OnKeyboard(curEvent);
 
-                    lastKeyPressedTime_ = GetTimeMiliseconds();
+                    // lastKeyPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
 
@@ -237,11 +243,11 @@ class RealWindow final : public Window {
                     break;
             }
 
-            if ((GetTimeMiliseconds() - lastTickTime_) < TimeBetweenTicks)
-                return;
+            // if ((GetTimeMiliseconds() - lastTickTime_) < TimeBetweenTicks)
+            //     return;
 
             OnTick(curEvent);
-            lastTickTime_ = GetTimeMiliseconds();
+            // lastTickTime_ = GetTimeMiliseconds();
         }
 };
 
@@ -252,11 +258,8 @@ class DynamicWindow : public Window {
         {}
 
         void operator+=(Widget* windowToAdd) override {
-            windowToAdd->shiftY_ = uint32_t(height_);
-            height_ += windowToAdd->height_;
-
-            windowToAdd->shiftX_ = 0;
-            width_ = std::max(width_, windowToAdd->width_);
+            windowToAdd->SetShifts(0, uint32_t(GetHeight()));
+            SetSizes(std::max(GetWidth(), windowToAdd->GetWidth()), GetHeight() + windowToAdd->GetHeight());
 
             Window::operator+=(windowToAdd);
         }
@@ -276,7 +279,7 @@ class LimitedWindow : public Window {
         {}
 
         virtual void operator+=(Widget* newWidget) override {
-            maxHeight_ += double(newWidget->height_);
+            maxHeight_ += double(newWidget->GetHeight());
 
             Window::operator+=(newWidget);
         }
@@ -290,8 +293,10 @@ class LimitedWindow : public Window {
         }
 
         virtual void OnTick(const Event& curEvent) override {
-            Draw();
+            ProcessRedraw();
             TickVisible(curEvent);
+
+            PlaceTexture();
         }
 
         virtual void OnRelease(const Event& curEvent) override {
@@ -302,20 +307,20 @@ class LimitedWindow : public Window {
             KeyVisible(curEvent);
         }
 
-    private:
+    protected:
         void TriggerVisible(void (Widget::* method)(const Event& curEvent), const Event& curEvent) {
             uint32_t curHeight = 0;
             uint32_t curShownHeight = 0;
 
             for (auto& curWidget : *manager_.GetWidgetsList()) {
-                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->height_) <= height_) && ((curWidget->width_ + curWidget->shiftX_) <= width_)) {
-                    curWidget->shiftY_ = curShownHeight;
+                if ((curHeight >= uint32_t(curPointer_)) && ((curShownHeight + curWidget->GetHeight()) <= GetHeight()) && ((curWidget->GetWidth() + curWidget->GetShiftX()) <= GetWidth())) {
+                    curWidget->SetShifts(curWidget->GetShiftX(), curShownHeight);
                     (curWidget->*method)(curEvent);
 
-                    curShownHeight += uint32_t(curWidget->height_);
+                    curShownHeight += uint32_t(curWidget->GetHeight());
                 }
 
-                curHeight += uint32_t(curWidget->height_);
+                curHeight += uint32_t(curWidget->GetHeight());
             }
         }
 

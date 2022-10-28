@@ -31,8 +31,8 @@ enum class TracerGraphics {
 class SphereInfo;
 class PlaneInfo;
 
-void DeleteSphere(CustomButton<SphereInfo>* obj, const Vector& coords);
-void DeletePlane(CustomButton<PlaneInfo>* obj, const Vector& coords);
+void DeleteSphere(CustomButton<SphereInfo>* obj, const CordsPair& coords);
+void DeletePlane(CustomButton<PlaneInfo>* obj, const CordsPair& coords);
 
 void AddMaterialInfo(DynamicWindow* curWindow, Material* material, bool* isChanged);
 void AddTextureInfo(DynamicWindow* curWindow, const Texture* texture, bool* isChanged);
@@ -61,8 +61,8 @@ class SphereInfo : public DynamicWindow {
             *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 180, 30, &spherePtr_->name_, 0);
 
             CustomButton<SphereInfo>* deleteButton    = new CustomButton<SphereInfo>(180, 0, 50, 30, this);
-            deleteButton->onClick_ += new FuncCaller<CustomButton<SphereInfo>, Vector>(deleteButton, &DeleteSphere);
-            deleteButton->hoveredSkin_ = SkinIdxs::ButtonHovering;
+            deleteButton->SetHandler(new FuncCaller<CustomButton<SphereInfo>, CordsPair>(deleteButton, &DeleteSphere));
+            deleteButton->SetHoveredSkin(SkinIdxs::ButtonHovering);
             deleteButton->SetText("RM", 0xffffff00);
             
             *nameDeleteWindow += deleteButton;
@@ -124,9 +124,9 @@ class PlaneInfo : public DynamicWindow {
             *nameDeleteWindow += new CtrlTextField<std::string>(0, 0, 180, 30, &planePtr_->name_, 0);
             
             CustomButton<PlaneInfo>* deleteButton    = new CustomButton<PlaneInfo>(180, 0, 50, 30, this);
-            deleteButton->onClick_ += new FuncCaller<CustomButton<PlaneInfo>, Vector>(deleteButton, &DeletePlane);
+            deleteButton->SetHandler(new FuncCaller<CustomButton<PlaneInfo>, CordsPair>(deleteButton, &DeletePlane));
             deleteButton->SetText("RM", 0xffffff00);
-            deleteButton->hoveredSkin_ = SkinIdxs::ButtonHovering;
+            deleteButton->SetHoveredSkin(SkinIdxs::ButtonHovering);
             *nameDeleteWindow += deleteButton;
 
             Window* mainWindow = new Window(0, 0, 240, 30);
@@ -163,8 +163,7 @@ const int64_t tracerFrameTime = 100;
 
 class Raytracer : public FlexImageWindow {
     private:
-        bool isChanged_;
-
+        bool isRerender_;
         bool isNewObjects_;
         List* objectsList_;
 
@@ -185,12 +184,12 @@ class Raytracer : public FlexImageWindow {
         void ProcessRow(const double row, const Vector3D& cameraCoords, void* objectsVoid) {
             std::vector<BaseObject*> objects = *reinterpret_cast<std::vector<BaseObject*>*>(objectsVoid);
 
-            for (double curX = double(-width_) / 2; curX < double(width_) / 2; curX++) {
+            for (double curX = double(-GetWidth()) / 2; curX < double(GetWidth()) / 2; curX++) {
                 Vector3D sumColor = {0, 0, 0};
 
                 for (uint32_t curSample = 0; curSample < uint32_t(SuperSamplingCoef_); curSample++) {
-                    const double convertedY = (row  + GetRandomDouble()) * (virtualHeight_  / double(height_));
-                    const double convertedX = (curX + GetRandomDouble()) * (virtualWidth_   / double(width_));
+                    const double convertedY = (row  + GetRandomDouble()) * (virtualHeight_  / double(GetHeight()));
+                    const double convertedX = (curX + GetRandomDouble()) * (virtualWidth_   / double(GetWidth()));
 
                     const Vector3D virtualPoint = {convertedX, convertedY, displayDistance_};
 
@@ -201,7 +200,7 @@ class Raytracer : public FlexImageWindow {
                 } 
                 sumColor *= (1.0 / SuperSamplingCoef_);
                 
-                image_.SetPixel(uint32_t(curX + (double(width_) / 2)), uint32_t(row + (double(height_) / 2)), MyColor(sumColor.x_, sumColor.y_, sumColor.z_));
+                image_.SetPixel(uint32_t(curX + (double(GetWidth()) / 2)), uint32_t(row + (double(GetHeight()) / 2)), MyColor(sumColor.x_, sumColor.y_, sumColor.z_));
             }
         }
 
@@ -271,10 +270,10 @@ class Raytracer : public FlexImageWindow {
                 const std::type_info& curObjInfo = typeid(*curObject);
 
                 if (strstr(curObjInfo.name(), "Sphere")) {
-                    *listToFill += new SphereInfo(0, 0, (Sphere*)curObject, &isChanged_);
+                    *listToFill += new SphereInfo(0, 0, (Sphere*)curObject, &isRerender_);
                 }
                 else if (strstr(curObjInfo.name(), "Plane")) {
-                    *listToFill += new PlaneInfo(0, 0, (Plane*)curObject, &isChanged_);
+                    *listToFill += new PlaneInfo(0, 0, (Plane*)curObject, &isRerender_);
                 }
             }
         }
@@ -289,7 +288,8 @@ class Raytracer : public FlexImageWindow {
         float displayD, List* objects = nullptr):
 
         FlexImageWindow(x, y, width, height),
-        isChanged_(1), isNewObjects_(1), 
+        isRerender_(1),
+        isNewObjects_(1), 
         objectsList_(objects),
         objects_(),
         SuperSamplingCoef_(SuperSamplingCoef), MaxRecursionDepth_(maxRecurs),
@@ -310,7 +310,7 @@ class Raytracer : public FlexImageWindow {
             SuperSamplingCoef_ = 1;
             MaxRecursionDepth_ = 2;
             
-            isChanged_ = 1;
+            isRerender_ = 1;
             graphSettings_ = TracerGraphics::LowGraphics;
         }
 
@@ -318,7 +318,7 @@ class Raytracer : public FlexImageWindow {
             SuperSamplingCoef_ = 5;
             MaxRecursionDepth_ = 4;
 
-            isChanged_ = 1;
+            isRerender_ = 1;
             graphSettings_ = TracerGraphics::MidGraphics;
         }
 
@@ -326,7 +326,7 @@ class Raytracer : public FlexImageWindow {
             SuperSamplingCoef_ = 20;
             MaxRecursionDepth_ = 8;
 
-            isChanged_ = 1;
+            isRerender_ = 1;
             graphSettings_ = TracerGraphics::HightGraphics;
         }
 
@@ -334,7 +334,7 @@ class Raytracer : public FlexImageWindow {
             obj->parent_ = this;
             objects_.push_back(obj);
 
-            isChanged_ = 1;
+            isRerender_ = 1;
             isNewObjects_ = 1;
         }
 
@@ -349,22 +349,30 @@ class Raytracer : public FlexImageWindow {
             }
 
             obj->parent_  = nullptr;
-            isChanged_    = 1;
+            isRerender_    = 1;
             isNewObjects_ = 1;
         }
 
-        void Draw(const int64_t& time) override {
-            if (isChanged_ == 0) {
-                FlexImageWindow::Draw(time);
+        virtual void OnTick(const Event& curEvent) override {
+            if (isRerender_) {
+                ReDraw();
+            }
+            
+            FlexImageWindow::OnTick(curEvent);
+        }
+
+        virtual void ReDraw() override {
+            if (isRerender_ == 0) {
+                FlexImageWindow::ReDraw();
 
                 return;
             }
 
-            if (CmpDbl(renderRow_, (double(height_) / 2))) {
-                renderRow_ = -double(height_) / 2;
+            if (CmpDbl(renderRow_, (double(GetHeight()) / 2))) {
+                renderRow_ = -double(GetHeight()) / 2;
             }
 
-            if (CmpDbl(renderRow_, -double(height_) / 2)) {
+            if (CmpDbl(renderRow_, -double(GetHeight()) / 2)) {
                 image_.Clear();
             }
 
@@ -379,26 +387,27 @@ class Raytracer : public FlexImageWindow {
 
             std::array<std::thread, uint64_t(threadsAmount)> threads;
 
-            for (double curY = renderRow_; curY < double(height_) / 2; curY += threadsAmount) {
-                if ((GetTimeMiliseconds() - time) > tracerFrameTime) {
+            int64_t startTime = GetTimeMiliseconds();
+            for (double curY = renderRow_; curY < double(GetHeight()) / 2; curY += threadsAmount) {
+                if ((GetTimeMiliseconds() - startTime) > tracerFrameTime) {
                     return;
                 }
 
-                for (double curThread = 0; (curThread < threadsAmount) && ((curY + curThread) < double(height_) / 2); curThread++) {
+                for (double curThread = 0; (curThread < threadsAmount) && ((curY + curThread) < double(GetHeight()) / 2); curThread++) {
                     threads[uint32_t(curThread)] = std::thread(&Raytracer::ProcessRow, this, curY + curThread, cameraCoords_, &objects_);
                     
                 }
 
-                for (double curThread = 0; (curThread < threadsAmount) && ((curY + curThread) < double(height_) / 2); curThread++) {
+                for (double curThread = 0; (curThread < threadsAmount) && ((curY + curThread) < double(GetHeight()) / 2); curThread++) {
                     threads[uint32_t(curThread)].join();
                     renderRow_++;
                 }
 
-                FlexImageWindow::Draw(time);
+                FlexImageWindow::ReDraw();
             }
 
-            isChanged_ = 0;
-            FlexImageWindow::Draw(time);
+            isRerender_ = 0;
+            FlexImageWindow::ReDraw();
         }
 
         ~Raytracer() {

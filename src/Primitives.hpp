@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Color.hpp"
+#include "CordsPair.hpp"
 
 const double TextScalar = 0.75;
 
@@ -17,9 +18,7 @@ class Rectangle {
 
         float rotation_ = 0;
 
-        void Draw(sf::RenderWindow* window, sf::Texture* texture) {
-            assert(window);
-
+        void Draw(sf::RenderTexture& widgetContainer, sf::Texture* texture) {
             sf::Vector2f sizesVec = {float(width_), float(height_)};
             sf::RectangleShape rect(sizesVec);
 
@@ -27,7 +26,9 @@ class Rectangle {
 
             rect.setTexture(texture);
             rect.setRotation(float((rotation_ * 180.0) / M_PI));
-            window->draw(rect);
+
+            widgetContainer.draw(rect);
+            widgetContainer.display();
         }
 };
 
@@ -78,13 +79,11 @@ class Image {
             }
         }
 
-        void Draw(sf::RenderWindow* window, const Vector& x0y0, const Vector& xyVirt, const uint32_t width, const uint32_t height) const {
-            assert(window);
-
+        void Draw(sf::RenderTexture& container, const CordsPair& x0y0, const Vector& xyVirt, const uint32_t width, const uint32_t height) const {
             sf::Vector2f sizesVec = {float(width), float(height)};
 
             sf::RectangleShape rectangle(sizesVec);
-            rectangle.setPosition({float(x0y0.x_), float(x0y0.y_)});
+            rectangle.setPosition({float(x0y0.x), float(x0y0.y)});
 
             sf::Texture curTexture = {};
 
@@ -95,7 +94,9 @@ class Image {
             rectangle.setTexture(&curTexture);
 
             rectangle.setRotation(float((rotation_ / M_PI) * 180.0));
-            window->draw(rectangle);
+
+            container.draw(rectangle);
+            container.display();
         }
 };
 
@@ -123,14 +124,12 @@ class Text {
             return &realString_;
         }
 
-        void Draw(sf::RenderWindow* window, const CordsPair& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
-            assert(window);
-            
+        void Draw(sf::RenderTexture& containter, const CordsPair& x0y0, [[maybe_unused]] const int64_t width, const int64_t height) {
             sf::Font font;
             font.loadFromFile("./fonts/arial.ttf");
 
             sf::Text text(realString_, font);
-            text.setPosition({x0y0.x, x0y0.y});
+            text.setPosition({float(x0y0.x), float(x0y0.y)});
 
             text.setCharacterSize(uint32_t(double(height) * TextScalar));
             text.setStyle(sf::Text::Regular);
@@ -139,6 +138,8 @@ class Text {
             text.setFillColor(curColor);
 
             text.setRotation(float((rotation_ / M_PI) * 180.0));
-            window->draw(text);
+
+            containter.draw(text);
+            containter.display();
         }
 };  

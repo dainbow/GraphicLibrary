@@ -3,6 +3,7 @@
 #include <list>
 #include <chrono>
 
+#include "CordsPair.hpp"
 #include "Event.hpp"
 #include "SkinManager.hpp"
 #include "Color.hpp"
@@ -11,19 +12,15 @@
 class Window;
 using Event = sf::Event;
 
-struct CordsPair {
-    uint32_t x;
-    uint32_t y;
-};
-
 class Widget {
     protected:
         Widget* parent_;
         sf::RenderWindow* ptrToRealWdw_;
         SkinManager*      skinManager_;
+        sf::RenderTexture widgetContainer_;
 
         SkinIdxs widgetSkin_;
-    public:
+    private:
         int64_t width_;
         int64_t height_;
 
@@ -34,23 +31,27 @@ class Widget {
     protected:   
         bool isClicked_;
         bool isHolded_;
+        bool isChanged_;
     public:
         Widget(uint32_t shiftX, uint32_t shiftY, int64_t width, int64_t height) :
         parent_(nullptr), ptrToRealWdw_(nullptr),
         skinManager_(nullptr),
+        widgetContainer_(),
         widgetSkin_(SkinIdxs::NoSkin),
         width_(width), height_(height),
         shiftX_(shiftX), shiftY_(shiftY),
         rotation_(0),
-        isClicked_(0), isHolded_(0)
-        {}
+        isClicked_(0), isHolded_(0), isChanged_(1)
+        {
+            widgetContainer_.create(uint32_t(width_), uint32_t(height_));
+        }
 
         virtual ~Widget() {}
 
         Widget& operator=([[maybe_unused]] const Widget& widgToCpy) = default;
         Widget(const Widget& widgToCpy) = default;
 
-        virtual void OnMove(const Event& curEvent) {
+        virtual void OnMove([[maybe_unused]] const Event& curEvent) {
 
         }
 
@@ -77,28 +78,55 @@ class Widget {
         }
 
         virtual void OnClick(const Event& curEvent) {
-            CordsPair curCords = {uint32_t(curEvent.mouseButton.x), uint32_t(curEvent.mouseButton.y)};
+            CordsPair curCords = {curEvent.mouseButton.x, curEvent.mouseButton.y};
 
             FlagClicked(curCords);
             FlagHolded(curCords);
         }
 
-        virtual void Draw() = 0;
+        virtual void ReDraw() = 0;
 
-        virtual void OnTick(const Event& curEvent) {
-            Draw();
+        sf::RenderTexture& GetRenderTexture() {
+            return widgetContainer_;
+        }
+
+        virtual void ProcessRedraw() {
+            if (isChanged_) {
+                widgetContainer_.clear();
+                ReDraw();
+
+                isChanged_ = 0;
+            }
+        }
+
+        virtual void PlaceTexture() {
+            sf::Sprite sprite(widgetContainer_.getTexture());
+            sprite.setPosition({float(shiftX_), float(shiftY_)});
+            sprite.setRotation(float((rotation_ / M_PI) * 180.0));
+
+            assert(parent_);
+
+            parent_->GetRenderTexture().draw(sprite);
+            parent_->GetRenderTexture().display();
+        }
+
+        virtual void OnTick([[maybe_unused]] const Event& curEvent) {
+            ProcessRedraw();
+            PlaceTexture();
         }
 
         virtual void FlagReleased() {
             isClicked_ = 0;
             isHolded_  = 0;
+
+            SetChanged();
         }
 
-        virtual void OnRelease(const Event& curEvent) {
+        virtual void OnRelease([[maybe_unused]] const Event& curEvent) {
             FlagReleased();
         }
 
-        virtual void OnKeyboard(const Event& curEvent) {
+        virtual void OnKeyboard([[maybe_unused]] const Event& curEvent) {
 
         }
 
@@ -130,35 +158,75 @@ class Widget {
             skinManager_ = skinManager;
         }
 
-        void Rotate(float rotation) {
-            rotation_ += rotation;
+        int64_t GetWidth() {
+            return width_;
         }
 
-        float GetRotation() {
-            float result = 0;
+        int64_t GetHeight() {
+            return height_;
+        }
+
+        uint32_t GetShiftX() {
+            return shiftX_;
+        }
+
+        uint32_t GetShiftY() {
+            return shiftY_;
+        }
+
+        void SetChanged() {
             Widget* curWidget = this;
 
-            while(curWidget->parent_) {
-                result += curWidget->rotation_;
+            while (curWidget) {
+                curWidget->isChanged_ = 1;
 
                 curWidget = curWidget->parent_;
             }
+        }
 
-            return result;
+        void SetSizes(const int64_t newWidth, const int64_t newHeight) {
+            width_  = newWidth;
+            height_ = newHeight;
+            
+            widgetContainer_.create(uint32_t(width_), uint32_t(height_));
+            SetChanged();
+        }
+
+        void SetShifts(const uint32_t newXShift, const uint32_t newYShift) {
+            shiftX_ = newXShift;
+            shiftY_ = newYShift;
+
+            SetChanged();
+        }
+
+        void SetRotation(float newRotation) {
+            rotation_ = newRotation;
+
+            SetChanged();
+        }
+
+        float GetRotation() {
+            return rotation_;
+        }
+
+        void Rotate(float rotation) {
+            rotation_ += rotation;
+
+            SetChanged();
         }
 
         CordsPair ConvertXY(const CordsPair& cords) {
             Widget* curWidg = this;
 
-            int64_t x = cords.x;
-            int64_t y = cords.y;
+            int32_t x = cords.x;
+            int32_t y = cords.y;
 
             while (curWidg->parent_) {
-                int64_t oldX = x;
-                int64_t oldY = y;
+                int32_t oldX = x;
+                int32_t oldY = y;
 
-                x  = int64_t(float(oldX) * cosf(curWidg->rotation_) - float(oldY) * sinf(curWidg->rotation_));
-                y  = int64_t(float(oldX) * sinf(curWidg->rotation_) + float(oldY) * cosf(curWidg->rotation_));
+                x  = int32_t(float(oldX) * cosf(curWidg->rotation_) - float(oldY) * sinf(curWidg->rotation_));
+                y  = int32_t(float(oldX) * sinf(curWidg->rotation_) + float(oldY) * cosf(curWidg->rotation_));
 
                 x += curWidg->shiftX_;
                 y += curWidg->shiftY_;
@@ -176,18 +244,18 @@ class Widget {
                 parentsList.push_front(curWidg);
             }
 
-            int64_t x = cords.x;
-            int64_t y = cords.y;
+            int32_t x = cords.x;
+            int32_t y = cords.y;
 
             for (auto& curWidg : parentsList) {
                 x -= curWidg->shiftX_;
                 y -= curWidg->shiftY_;
 
-                int64_t oldX = x;
-                int64_t oldY = y;
+                int32_t oldX = x;
+                int32_t oldY = y;
 
-                x  = int64_t(float(oldX) * cosf(-curWidg->rotation_) - float(oldY) * sinf(-curWidg->rotation_));
-                y  = int64_t(float(oldX) * sinf(-curWidg->rotation_) + float(oldY) * cosf(-curWidg->rotation_));
+                x  = int32_t(float(oldX) * cosf(-curWidg->rotation_) - float(oldY) * sinf(-curWidg->rotation_));
+                y  = int32_t(float(oldX) * sinf(-curWidg->rotation_) + float(oldY) * cosf(-curWidg->rotation_));
             }
 
             return {x, y};

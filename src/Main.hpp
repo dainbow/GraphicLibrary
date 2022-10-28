@@ -18,21 +18,20 @@
 #include "Plane.hpp"
 #include "Raytracer.hpp"
 
-class ControlGraphics {
-    public:
-        Raytracer* tracer_;
+struct ControlGraphics {
+    Raytracer* tracer_;
 
-        CustomButton<ControlGraphics>* lowButton_;
-        CustomButton<ControlGraphics>* midButton_;
-        CustomButton<ControlGraphics>* highButton_;
+    CustomButton<ControlGraphics>* lowButton_;
+    CustomButton<ControlGraphics>* midButton_;
+    CustomButton<ControlGraphics>* highButton_;
 
-        ControlGraphics(const ControlGraphics& graphics)            = default;
-        ControlGraphics& operator=(const ControlGraphics& graphics) = default;
+    ControlGraphics(const ControlGraphics& graphics)            = default;
+    ControlGraphics& operator=(const ControlGraphics& graphics) = default;
 };
 
-void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
-void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
-void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const Vector& vec);
+void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec);
+void MidGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec);
+void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec);
 
-void AddSphereToTracer(CustomButton<Raytracer>* button, const Vector& vec);
-void AddPlaneToTracer(CustomButton<Raytracer>* button, const Vector& vec);
+void AddSphereToTracer(CustomButton<Raytracer>* button, const CordsPair& vec);
+void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec);

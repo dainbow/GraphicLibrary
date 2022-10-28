@@ -17,13 +17,13 @@ class Button : public Window {
         Text text_;
 
         bool isHovered_;
-
     public:
         Button(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
         Window(x, y, width, height),
-        isHovered_(0),
+        clickAction_(nullptr),
+        hoveredSkin_(SkinIdxs::ButtonHovering), clickedSkin_(SkinIdxs::ButtonPressed),
         text_(),
-        hoveredSkin_(SkinIdxs::ButtonHovering), clickedSkin_(SkinIdxs::ButtonPressed)
+        isHovered_(0)
         {   
             widgetSkin_ = SkinIdxs::ButtonNotPressed;
         }
@@ -34,16 +34,20 @@ class Button : public Window {
         virtual void MoveHover(const CordsPair& cords) {
             if (IsClicked(cords)) {
                 isHovered_ = 1;
+
+                SetChanged();
             }
-            else {
+            else if (isHovered_) {
                 isHovered_ = 0;
+
+                SetChanged();
             }
         }  
 
         virtual void OnMove(const Event& curEvent) override {
             Window::OnMove(curEvent);
 
-            MoveHover({uint32_t(curEvent.mouseButton.x), uint32_t(curEvent.mouseButton.y)});
+            MoveHover({curEvent.mouseMove.x, curEvent.mouseMove.y});
         }
 
         void SetHandler(BaseHandler<CordsPair>* newHandler) {
@@ -54,11 +58,19 @@ class Button : public Window {
             clickAction_ = newHandler;
         }
 
+        virtual void FlagClicked(const CordsPair& cords) override {
+            if (IsClicked(cords)) {
+                isClicked_ = 1;
+
+                SetChanged();
+            }
+        }
+
         virtual void OnClick(const Event& curEvent) override {
             Window::OnClick(curEvent);
 
             if (clickAction_) {
-                clickAction_->Call({uint32_t(curEvent.mouseButton.x), uint32_t(curEvent.mouseButton.y)});
+                clickAction_->Call({curEvent.mouseButton.x, curEvent.mouseButton.y});
             }
         }
 
@@ -66,9 +78,12 @@ class Button : public Window {
             text_ = {newString, newColor};
         } 
 
-        virtual void Draw() override {
-            CordsPair newXY = ConvertXY({0, 0});
-            Rectangle realWindowRect({width_, height_, newXY.x, newXY.y, GetRotation()});
+        void SetHoveredSkin(const SkinIdxs newSkin) {
+            hoveredSkin_ = newSkin;
+        }
+
+        virtual void ReDraw() override {
+            Rectangle realWindowRect({GetWidth(), GetHeight(), 0, 0, 0});
 
             sf::Texture* curTexture = nullptr;
             if (isClicked_) {
@@ -81,13 +96,13 @@ class Button : public Window {
                 curTexture = skinManager_->GetTexture(widgetSkin_);
             }
 
-            realWindowRect.Draw(ptrToRealWdw_, curTexture);  
+            realWindowRect.Draw(widgetContainer_, curTexture);  
 
             if (text_.GetSize()) {
-                CordsPair textXY = ConvertXY({XTextShift, YTextShift});
+                CordsPair textXY = {XTextShift, YTextShift};
                 text_.rotation_ = GetRotation();
 
-                text_.Draw(ptrToRealWdw_, textXY, width_, height_);
+                text_.Draw(widgetContainer_, textXY, GetWidth(), GetHeight());
             }
         }
 };
@@ -98,7 +113,7 @@ class DropList : public Button {
 
         DropList(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
         Button(x, y, width, height),
-        list_(new DynamicWindow(x, y + uint32_t(height_)))
+        list_(new DynamicWindow(x, y + uint32_t(GetHeight())))
         {}
 
         DropList(const DropList& dropList)            = default;
@@ -117,7 +132,10 @@ class DropList : public Button {
         }
 
         virtual void OnTick(const Event& curEvent) override {
-            Button::OnTick(curEvent);
+            ProcessRedraw();
+            manager_.TriggerTick(curEvent);
+            PlaceTexture();
+
 
             ConditionalTick(curEvent);
         }
@@ -161,9 +179,13 @@ class DropList : public Button {
         virtual void FlagClicked(const CordsPair& coords) override {
             if (IsClicked(coords)) {
                 isClicked_ ^= 1;
+
+                SetChanged();
             }
             else if ((!list_->IsClicked(coords)) && isClicked_) {
                 isClicked_ = 0;
+
+                SetChanged();
             }
         }
 
@@ -198,11 +220,12 @@ template <class T>
 class CustomButton : public Button {
     protected: 
         void (*actionWithContext_)(T* context, const Event& curEvent);
-        T* context;
+        T* context_;
 
     public:
         CustomButton(uint32_t x, uint32_t y, uint32_t width, uint32_t height, T* context) :
         Button(x, y, width, height),
+        actionWithContext_(nullptr),
         context_(context)
         {
             hoveredSkin_ = SkinIdxs::ButtonNotPressed;
@@ -211,11 +234,11 @@ class CustomButton : public Button {
         CustomButton(const CustomButton<T>& anotherButton)               = default;
         CustomButton<T>& operator=(const CustomButton<T>& anotherButton) = default;
 
-        virtual void OnClick(const Event& curEvent) {
+        virtual void OnClick(const Event& curEvent) override {
             Button::OnClick(curEvent);
 
-            if (context && actionWithContext_) {
-                (*actionWithContext_)(context, curEvent);
+            if (context_ && actionWithContext_) {
+                (*actionWithContext_)(context_, curEvent);
             }
         }
 
@@ -229,6 +252,7 @@ const uint32_t defaultBarHeight    = 20;
 
 class ScrollBar : public Window {
     private:
+        double savedValue;
         double* valueToCtrl_;
 
         double* minValue_;
@@ -243,7 +267,7 @@ class ScrollBar : public Window {
     public:
         ScrollBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, double* valueToCtrl, double* minValue, double* maxValue) :
         Window(x, y, width, height),
-        valueToCtrl_(valueToCtrl), 
+        savedValue(valueToCtrl ? *valueToCtrl : 0), valueToCtrl_(valueToCtrl), 
         minValue_(minValue), maxValue_(maxValue),
         scale_(0),
         arrowUp_(new Button(0, 0, width, defaultArrowsHeight)),
@@ -267,13 +291,13 @@ class ScrollBar : public Window {
         virtual void OnMove(const Event& curEvent) override {
             Window::OnMove(curEvent);
 
-            MoveAtBar({uint32_t(curEvent.mouseButton.x), uint32_t(curEvent.mouseButton.y)});
+            MoveAtBar({curEvent.mouseMove.x, curEvent.mouseMove.y});
         }
 
         virtual void OnClick(const Event& curEvent) override {
             Window::OnClick(curEvent);
 
-            ClickAtBar({uint32_t(curEvent.mouseButton.x), uint32_t(curEvent.mouseButton.y)});
+            ClickAtBar({curEvent.mouseButton.x, curEvent.mouseButton.y});
         }
 
         virtual void OnTick(const Event& curEvent) override {
@@ -283,23 +307,23 @@ class ScrollBar : public Window {
         }
 
         void SetButHigh(const uint32_t value) {
-            valueBut_->height_ = value;
+            valueBut_->SetSizes(valueBut_->GetWidth(), value);
         }
 
         int64_t GetButHigh() {
-            return valueBut_->height_;
+            return valueBut_->GetHeight();
         }
 
         ScrollBar(const ScrollBar& bar) = default;
         ScrollBar& operator=(const ScrollBar& bar) = default;
 
         void RecalcScale() {
-            scale_ = (*maxValue_ - *minValue_) / double(height_ - 2 * defaultArrowsHeight - valueBut_->height_);
+            scale_ = (*maxValue_ - *minValue_) / double(GetHeight() - 2 * defaultArrowsHeight - valueBut_->GetHeight());
         }
 
         void SetHeight(const uint32_t height) {
-            height_ = height;
-            arrowDown_->shiftY_ = height - defaultArrowsHeight;
+            SetSizes(GetWidth(), height);
+            arrowDown_->SetShifts(arrowDown_->GetShiftX(), height - defaultArrowsHeight);
         }
 
         virtual void SetParent(Widget* parent) override {
@@ -328,14 +352,19 @@ class ScrollBar : public Window {
 
     private:
         void UpdateBarPosition() {
+            if (CmpDbl(*valueToCtrl_, savedValue))
+                return;
+
             if (CmpDbl((*maxValue_ - *minValue_), 0)) {
-                valueBut_->shiftY_ = defaultArrowsHeight;
+                valueBut_->SetShifts(valueBut_->GetShiftX(), defaultArrowsHeight);
 
                 return;
             }
 
-            double newShift = ConvertSysToSys(*valueToCtrl_, *minValue_, *maxValue_, double(defaultArrowsHeight), double(height_ - defaultArrowsHeight));
-            valueBut_->shiftY_ = uint32_t(newShift);
+            double newShift = ConvertSysToSys(*valueToCtrl_, *minValue_, *maxValue_, double(defaultArrowsHeight), double(GetHeight() - defaultArrowsHeight));
+            
+            valueBut_->SetShifts(valueBut_->GetShiftX(), uint32_t(newShift));
+            savedValue = *valueToCtrl_;
         }
 
         void ArrowUp(const CordsPair& cords) {
@@ -358,7 +387,7 @@ class ScrollBar : public Window {
             RecalcScale();
 
             if (arrowDown_->IsClicked(cords)) {
-                double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->height_), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
+                double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->GetHeight()), double(defaultArrowsHeight), double(GetHeight() - defaultArrowsHeight), *minValue_, *maxValue_);
 
                 if (((*valueToCtrl_ + realLength + scale_) < *maxValue_) || CmpDbl(*valueToCtrl_ + scale_ + realLength, *maxValue_)) {
                     *valueToCtrl_ += scale_;
@@ -372,8 +401,8 @@ class ScrollBar : public Window {
         void MoveTo(const CordsPair& cords) {
             CordsPair newCords = ConvertRealXY(cords);
 
-            double newValue = ConvertSysToSys(double(newCords.y), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
-            double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->height_), double(defaultArrowsHeight), double(height_ - defaultArrowsHeight), *minValue_, *maxValue_);
+            double newValue = ConvertSysToSys(double(newCords.y), double(defaultArrowsHeight), double(GetHeight() - defaultArrowsHeight), *minValue_, *maxValue_);
+            double realLength = ConvertSysToSys(double(defaultArrowsHeight + valueBut_->GetHeight()), double(defaultArrowsHeight), double(GetHeight() - defaultArrowsHeight), *minValue_, *maxValue_);
             
             if ((newValue <= *valueToCtrl_ ) && (newValue >= *minValue_)) {
                 *valueToCtrl_ = newValue;
@@ -417,9 +446,12 @@ class List : public LimitedWindow {
         }
 
         virtual void OnTick(const Event& curEvent) override {
-            LimitedWindow::OnTick(curEvent);
+            ProcessRedraw();
 
+            TickVisible(curEvent);
             TickScroll(curEvent);
+
+            PlaceTexture();
         }
 
         virtual void OnClick(const Event& curEvent) override {
@@ -463,12 +495,12 @@ class List : public LimitedWindow {
 
             scrollBar_->RecalcScale();
             
-            double visibleCoef = double(height_) / double(maxHeight_);
+            double visibleCoef = double(GetHeight()) / double(maxHeight_);
             visibleCoef = (visibleCoef > 1) ? 1 : visibleCoef;
 
-            scrollBar_->SetButHigh(uint32_t(visibleCoef * double(height_ - 2 * defaultArrowsHeight)));
-            if ((int64_t(curPointer_) + scrollBar_->GetButHigh()) > (height_ - int64_t(defaultArrowsHeight))) {
-                curPointer_ = double(height_ - int64_t(defaultArrowsHeight) - scrollBar_->GetButHigh());
+            scrollBar_->SetButHigh(uint32_t(visibleCoef * double(GetHeight() - 2 * defaultArrowsHeight)));
+            if ((int64_t(curPointer_) + scrollBar_->GetButHigh()) > (GetHeight() - int64_t(defaultArrowsHeight))) {
+                curPointer_ = double(GetHeight() - int64_t(defaultArrowsHeight) - scrollBar_->GetButHigh());
             }
         }
 
@@ -519,9 +551,13 @@ class TextField : public Button {
         virtual void FlagClicked(const CordsPair& coords) override {
             if (IsClicked(coords)) {
                 isClicked_ ^= 1;
+
+                SetChanged();
             }
             else if (isClicked_) {
                 isClicked_ = 0;
+
+                SetChanged();
             }
         }
 
@@ -553,6 +589,7 @@ class TextField : public Button {
                 }
 
                 SetText(tempString, 0xffffff00);
+                SetChanged();
             }
         }
 };
@@ -563,19 +600,23 @@ class CtrlTextField : public TextField {
         T* ctrlThing_;
         bool* isChanged_;
 
-        virtual void FlagClicked(const Vector& coords) override {
+        virtual void FlagClicked(const CordsPair& coords) override {
             bool isClickedBefore = isClicked_;
 
             if (IsClicked(coords)) {
                 isClicked_ ^= 1;
+
+                SetChanged();
             }
             else if (isClicked_) {
                 isClicked_ = 0;
+
+                SetChanged();
             }
 
             if (isClickedBefore && !isClicked_ && ctrlThing_) {
                 std::stringstream myStream(*text_.GetRealString());
-
+                
                 myStream >> *ctrlThing_;
                 if (isChanged_) {
                     *isChanged_ = 1;
@@ -603,37 +644,53 @@ class CtrlTextField : public TextField {
 
 class ProgressBar : public CustomButton<double> {
     private:
+        double savedValue_;
         double minValue_;
         double maxValue_;
 
     public:
         ProgressBar(uint32_t x, uint32_t y, uint32_t width, uint32_t height, double* valueToCtrl, double minValue, double maxValue) :
         CustomButton(x, y, width, height, valueToCtrl),
+        savedValue_(valueToCtrl ? *valueToCtrl : 0),
         minValue_(minValue), maxValue_(maxValue)
         {
             widgetSkin_  = SkinIdxs::BarBackground;
             clickedSkin_ = SkinIdxs::BarProgress;
         }
 
-        virtual void Draw() override {
-            Window::Draw();
+        void UpdateProgress() {
+            if (CmpDbl(savedValue_, *context_)) {
+                return;
+            }
 
-            uint32_t percent = uint32_t((*context - minValue_) / (maxValue_ - minValue_) * 100);
+            SetChanged();
+            savedValue_ = *context_;
+        }
 
-            CordsPair newXY = ConvertXY({0, 0});
-            Rectangle realWindowRect({width_ * int64_t(percent) / 100, height_, newXY.x, newXY.y, GetRotation()});
+        virtual void OnTick(const Event& curEvent) override {
+            UpdateProgress();
 
-            realWindowRect.Draw(ptrToRealWdw_, skinManager_->GetTexture(clickedSkin_));  
+            Window::OnTick(curEvent);
+        }
+
+        virtual void ReDraw() override {
+            Window::ReDraw();
+
+            uint32_t percent = uint32_t((*context_ - minValue_) / (maxValue_ - minValue_) * 100);
+
+            Rectangle realWindowRect({GetWidth() * int64_t(percent) / 100, GetHeight(), 0, 0, 0});
+
+            realWindowRect.Draw(widgetContainer_, skinManager_->GetTexture(clickedSkin_));  
 
             std::stringstream stream;
             stream << percent << "%";
 
             SetText(stream.str());
             if (text_.GetSize()) {
-                CordsPair textXY = ConvertXY({uint32_t(XTextShift), uint32_t(YTextShift)});
-                text_.rotation_ = GetRotation();
+                CordsPair textXY = {uint32_t(XTextShift), uint32_t(YTextShift)};
+                text_.rotation_ = 0;
 
-                text_.Draw(ptrToRealWdw_, textXY, width_, height_);
+                text_.Draw(widgetContainer_, textXY, GetWidth(), GetHeight());
             }
         }
 };
