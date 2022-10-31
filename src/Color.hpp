@@ -55,6 +55,10 @@ class MyColor {
             blue_  = uint8_t(fBlue_  * 0xff);
         }
 
+        bool operator==(const MyColor& cmpColor) const {
+            return (red_ == cmpColor.red_) && (green_ == cmpColor.green_) && (blue_ == cmpColor.blue_);
+        }
+
         void operator*=(const MyColor& mulColor) {
             fRed_   *= mulColor.fRed_;
             fGreen_ *= mulColor.fGreen_;

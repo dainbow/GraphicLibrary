@@ -1,27 +1,34 @@
 #include "Main.hpp"
 
 int main() {
-    SkinManager manager("default");
-    RealWindow mainWindow(1000, 500, &manager);
+    SkinManager::GetInstance("default");
+    RealWindow mainWindow(1000, 500);
 
     //
     // TRACER OBJECTLIST CONFIG
     //
 
-    List* objectsList = new List(520, 20, 250, 400);
+    List* objectsList = new List(700, 20, 250, 400);
     mainWindow += objectsList;
+
+    //
+    // TOOL PALETTE CONFIG
+    //
+
+    ToolPalette* tracerPalette = new ToolPalette(20, 50);
+    mainWindow += tracerPalette;
 
     //
     // TRACER INIT
     //
 
-    Raytracer* tracer = new Raytracer(0, 0, 460, 460, 1, 4, {0, 0, 0}, 10, 10, 10, objectsList);
+    Raytracer* tracer = new Raytracer(0, 0, 460, 460, 1, 4, {0, 0, 0}, 10, 10, 10, tracerPalette, objectsList);
 
     //
     // TracerWindow Init
     //
 
-    Window* tracerWindow = new Window(20, 20, 400, 400);
+    Window* tracerWindow = new Window(200, 20, 400, 400);
     *tracerWindow += tracer;
     mainWindow += tracerWindow;
 
@@ -29,7 +36,7 @@ int main() {
     // ProgressBar Init
     //
 
-    ProgressBar* traceProgress = new ProgressBar(20, 440, 400, 30, &tracer->renderRow_, -double(tracer->GetHeight()) / 2, double(tracer->GetHeight()) / 2);
+    ProgressBar* traceProgress = new ProgressBar(200, 440, 400, 30, &tracer->renderRow_, -double(tracer->GetHeight()) / 2, double(tracer->GetHeight()) / 2);
     mainWindow += traceProgress;
 
     //

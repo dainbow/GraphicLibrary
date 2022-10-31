@@ -161,7 +161,7 @@ class PlaneInfo : public DynamicWindow {
 
 const int64_t tracerFrameTime = 100;
 
-class Raytracer : public FlexImageWindow {
+class Raytracer : public Canvas {
     private:
         bool isRerender_;
         bool isNewObjects_;
@@ -285,9 +285,9 @@ class Raytracer : public FlexImageWindow {
         double SuperSamplingCoef, uint32_t maxRecurs,
         const Vector3D& cameraCoords,
         float virtualW, float virtualH,
-        float displayD, List* objects = nullptr):
+        float displayD, ToolPalette* palette, List* objects = nullptr):
 
-        FlexImageWindow(x, y, width, height),
+        Canvas(x, y, width, height, palette),
         isRerender_(1),
         isNewObjects_(1), 
         objectsList_(objects),

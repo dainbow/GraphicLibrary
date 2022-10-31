@@ -19,13 +19,21 @@ enum class SkinIdxs {
     BarProgress          = 11,
     InactiveText         = 12,
     ActiveText           = 13,
+    LineTool             = 14,
+    BrushTool            = 15,
+    EraserTool           = 16,
+    RectTool             = 17,
+    EllipsTool           = 18,
+    BucketTool           = 19,
 
     COUNT,
 }; 
 
 class SkinManager {
-    public:
+    private:
+        sf::Texture* textures_;
 
+    public:
         SkinManager(const SkinManager& manager) = default;
         SkinManager& operator=(const SkinManager& manager) = default;
 
@@ -47,10 +55,13 @@ class SkinManager {
             delete[] textures_;
         }
 
-        sf::Texture* GetTexture(const SkinIdxs& skinNumber) {
-            return textures_ + static_cast<int32_t>(skinNumber);
+        static const SkinManager& GetInstance(const std::string& skinName) {
+            static SkinManager instance(skinName);
+
+            return instance;
         }
 
-    private:
-        sf::Texture* textures_;
+        sf::Texture* GetTexture(const SkinIdxs& skinNumber) const {
+            return textures_ + static_cast<int32_t>(skinNumber);
+        }
 };

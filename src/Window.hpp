@@ -43,7 +43,7 @@ class Window : public Widget {
 
         virtual void ReDraw() override {
             Rectangle realWindowRect({GetWidth(), GetHeight(), 0, 0, 0});
-            realWindowRect.Draw(widgetContainer_, skinManager_->GetTexture(widgetSkin_));  
+            realWindowRect.Draw(widgetContainer_, SkinManager::GetInstance("default").GetTexture(widgetSkin_));  
         }
 
         virtual void OnTick(const Event& curEvent) override {
@@ -65,8 +65,6 @@ class Window : public Widget {
 
         virtual void operator+=(Widget* newWidget) {
             newWidget->SetParent(this);
-            newWidget->SetRealWindowPtr(ptrToRealWdw_);
-            newWidget->SetSkinManager(skinManager_);
 
             manager_ += newWidget;
         }
@@ -74,8 +72,6 @@ class Window : public Widget {
         void operator-=(Widget* widgetToDisconnect) {
             manager_ -= widgetToDisconnect;
 
-            widgetToDisconnect->SetSkinManager(nullptr);
-            widgetToDisconnect->SetRealWindowPtr(nullptr);
             widgetToDisconnect->SetParent(nullptr);
         }
 
@@ -85,22 +81,6 @@ class Window : public Widget {
 
             for (auto& curChild : *manager_.GetWidgetsList()) {
                 curChild->SetParent(this);
-            }
-        }
-
-        virtual void SetRealWindowPtr(sf::RenderWindow* newPtr) override {
-            ptrToRealWdw_ = newPtr;
-
-            for (auto& curChild : *manager_.GetWidgetsList()) {
-                curChild->SetRealWindowPtr(newPtr);
-            }
-        }
-
-        virtual void SetSkinManager(SkinManager* skinManager) override {
-            skinManager_ = skinManager;
-
-            for (auto& curChild : *manager_.GetWidgetsList()) {
-                curChild->SetSkinManager(skinManager);
             }
         }
 };
@@ -119,15 +99,12 @@ class RealWindow final : public Window {
         int64_t lastTickTime_;
         int64_t lastMoveTime_;
     public:
-        RealWindow(uint32_t width, uint32_t height, SkinManager* skinManager) :
+        RealWindow(uint32_t width, uint32_t height) :
         Window(0, 0, width, height),
         realWindow_(sf::VideoMode(width, height), "Window"),
         lastPressedTime_(0), lastKeyPressedTime_(0), lastReleasedTime_(0), lastTickTime_(0), lastMoveTime_(0)
         {   
             widgetSkin_ = SkinIdxs::RealWindowBackground;
-
-            ptrToRealWdw_ = &realWindow_;
-            skinManager_ = skinManager;
         };
 
         ~RealWindow() {
@@ -189,12 +166,12 @@ class RealWindow final : public Window {
                 }
 
                 case sf::Event::MouseButtonPressed: {
-                    // if ((GetTimeMiliseconds() - lastPressedTime_) < TimeBetweenClicks)
-                    //     break;
+                    if ((GetTimeMiliseconds() - lastPressedTime_) < TimeBetweenClicks)
+                        break;
 
                     OnClick(curEvent);
 
-                    // lastPressedTime_ = GetTimeMiliseconds();
+                    lastPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
 

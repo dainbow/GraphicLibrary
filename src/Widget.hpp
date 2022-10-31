@@ -3,20 +3,23 @@
 #include <list>
 #include <chrono>
 
+#include "SkinManager.hpp"
 #include "CordsPair.hpp"
 #include "Event.hpp"
-#include "SkinManager.hpp"
 #include "Color.hpp"
 #include "Primitives.hpp"
 
 class Window;
 using Event = sf::Event;
 
+#define RAZOR_SHARK OnMove
+#define FIRE_HOPPER OnClick
+#define HOT_FIESTA OnTick
+#define HAND_OF_MIDAS OnRelease
+
 class Widget {
     protected:
         Widget* parent_;
-        sf::RenderWindow* ptrToRealWdw_;
-        SkinManager*      skinManager_;
         sf::RenderTexture widgetContainer_;
 
         SkinIdxs widgetSkin_;
@@ -34,8 +37,7 @@ class Widget {
         bool isChanged_;
     public:
         Widget(uint32_t shiftX, uint32_t shiftY, int64_t width, int64_t height) :
-        parent_(nullptr), ptrToRealWdw_(nullptr),
-        skinManager_(nullptr),
+        parent_(nullptr), 
         widgetContainer_(),
         widgetSkin_(SkinIdxs::NoSkin),
         width_(width), height_(height),
@@ -51,7 +53,7 @@ class Widget {
         Widget& operator=([[maybe_unused]] const Widget& widgToCpy) = default;
         Widget(const Widget& widgToCpy) = default;
 
-        virtual void OnMove([[maybe_unused]] const Event& curEvent) {
+        virtual void RAZOR_SHARK([[maybe_unused]] const Event& curEvent) {
 
         }
 
@@ -77,7 +79,7 @@ class Widget {
             }
         }
 
-        virtual void OnClick(const Event& curEvent) {
+        virtual void FIRE_HOPPER(const Event& curEvent) {
             CordsPair curCords = {curEvent.mouseButton.x, curEvent.mouseButton.y};
 
             FlagClicked(curCords);
@@ -110,7 +112,7 @@ class Widget {
             parent_->GetRenderTexture().display();
         }
 
-        virtual void OnTick([[maybe_unused]] const Event& curEvent) {
+        virtual void HOT_FIESTA([[maybe_unused]] const Event& curEvent) {
             ProcessRedraw();
             PlaceTexture();
         }
@@ -122,7 +124,7 @@ class Widget {
             SetChanged();
         }
 
-        virtual void OnRelease([[maybe_unused]] const Event& curEvent) {
+        virtual void HAND_OF_MIDAS([[maybe_unused]] const Event& curEvent) {
             FlagReleased();
         }
 
@@ -144,18 +146,6 @@ class Widget {
 
         virtual void SetParent(Widget* newParent) {
             parent_ = newParent;
-        }
-
-        virtual sf::RenderWindow* GetRealWindowPtr() {
-            return ptrToRealWdw_;
-        }
-
-        virtual void SetRealWindowPtr(sf::RenderWindow* newPtr) {
-            ptrToRealWdw_ = newPtr;
-        }
-
-        virtual void SetSkinManager(SkinManager* skinManager) {
-            skinManager_ = skinManager;
         }
 
         int64_t GetWidth() {

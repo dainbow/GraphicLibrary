@@ -87,13 +87,13 @@ class Button : public Window {
 
             sf::Texture* curTexture = nullptr;
             if (isClicked_) {
-                curTexture = skinManager_->GetTexture(clickedSkin_);
+                curTexture = SkinManager::GetInstance("default").GetTexture(clickedSkin_);
             }
             else if (isHovered_) {
-                curTexture = skinManager_->GetTexture(hoveredSkin_);
+                curTexture = SkinManager::GetInstance("default").GetTexture(hoveredSkin_);
             }
             else {
-                curTexture = skinManager_->GetTexture(widgetSkin_);
+                curTexture = SkinManager::GetInstance("default").GetTexture(widgetSkin_);
             }
 
             realWindowRect.Draw(widgetContainer_, curTexture);  
@@ -155,16 +155,6 @@ class DropList : public Button {
         virtual void SetParent(Widget* parent) override {
             parent_ = parent;
             list_->SetParent(parent);
-        }
-
-        virtual void SetRealWindowPtr(sf::RenderWindow* realPtr) override {
-            ptrToRealWdw_ = realPtr;
-            list_->SetRealWindowPtr(realPtr);
-        }
-
-        virtual void SetSkinManager(SkinManager* skinManager) override {
-            skinManager_ = skinManager;
-            list_->SetSkinManager(skinManager);
         }
 
         void operator+=(Widget* windowAdd) override {
@@ -333,23 +323,6 @@ class ScrollBar : public Window {
             valueBut_->SetParent(this);
             arrowDown_->SetParent(this);
         }
-
-        virtual void SetRealWindowPtr(sf::RenderWindow* realPtr) override {
-            ptrToRealWdw_ = realPtr;
-            
-            arrowUp_->SetRealWindowPtr(realPtr);
-            valueBut_->SetRealWindowPtr(realPtr);
-            arrowDown_->SetRealWindowPtr(realPtr);
-        }
-
-        virtual void SetSkinManager(SkinManager* skinManager) override {
-            skinManager_ = skinManager;
-
-            arrowUp_->SetSkinManager(skinManager);
-            valueBut_->SetSkinManager(skinManager);
-            arrowDown_->SetSkinManager(skinManager);
-        }
-
     private:
         void UpdateBarPosition() {
             if (CmpDbl(*valueToCtrl_, savedValue))
@@ -476,18 +449,6 @@ class List : public LimitedWindow {
             parent_ = parent;
             
             scrollBar_->SetParent(this);
-        }
-
-        virtual void SetRealWindowPtr(sf::RenderWindow* realPtr) override {
-            ptrToRealWdw_ = realPtr;
-            
-            scrollBar_->SetRealWindowPtr(realPtr);
-        }
-
-        virtual void SetSkinManager(SkinManager* skinManager) override {
-            skinManager_ = skinManager;
-
-            scrollBar_->SetSkinManager(skinManager);
         }
 
         virtual void operator+=(Widget* newWidget) override {
@@ -680,7 +641,7 @@ class ProgressBar : public CustomButton<double> {
 
             Rectangle realWindowRect({GetWidth() * int64_t(percent) / 100, GetHeight(), 0, 0, 0});
 
-            realWindowRect.Draw(widgetContainer_, skinManager_->GetTexture(clickedSkin_));  
+            realWindowRect.Draw(widgetContainer_, SkinManager::GetInstance("default").GetTexture(clickedSkin_));  
 
             std::stringstream stream;
             stream << percent << "%";

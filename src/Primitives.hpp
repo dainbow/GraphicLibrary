@@ -46,6 +46,10 @@ class Image {
             realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_});
         }
 
+        MyColor GetPixel(uint32_t width, uint32_t height) {
+            return MyColor((uint32_t(realImage_.getPixel(width, height).r) << 24) + (uint32_t(realImage_.getPixel(width, height).g) << 16) + (uint32_t(realImage_.getPixel(width, height).b) << 8));
+        }
+
         bool LoadFromFile(const sf::String& imageName) {
             return realImage_.loadFromFile(imageName);
         }   
