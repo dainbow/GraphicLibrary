@@ -148,19 +148,19 @@ class Widget {
             parent_ = newParent;
         }
 
-        int64_t GetWidth() {
+        int64_t GetWidth() const {
             return width_;
         }
 
-        int64_t GetHeight() {
+        int64_t GetHeight() const {
             return height_;
         }
 
-        uint32_t GetShiftX() {
+        uint32_t GetShiftX() const {
             return shiftX_;
         }
 
-        uint32_t GetShiftY() {
+        uint32_t GetShiftY() const {
             return shiftY_;
         }
 

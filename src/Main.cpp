@@ -161,26 +161,26 @@ int main() {
     // Promo config
     //
 
-    Promotion* promo1 = new Promotion();
-    mainWindow += promo1;
+    // Promotion* promo1 = new Promotion();
+    // mainWindow += promo1;
 
-    Promotion* promo2 = new Promotion();
-    mainWindow += promo2;
+    // Promotion* promo2 = new Promotion();
+    // mainWindow += promo2;
 
-    Promotion* promo3 = new Promotion();
-    mainWindow += promo3;
+    // Promotion* promo3 = new Promotion();
+    // mainWindow += promo3;
 
-    Promotion* promo4 = new Promotion();
-    mainWindow += promo4;
+    // Promotion* promo4 = new Promotion();
+    // mainWindow += promo4;
 
-    Promotion* promo5 = new Promotion();
-    mainWindow += promo5;
+    // Promotion* promo5 = new Promotion();
+    // mainWindow += promo5;
 
-    Promotion* promo6 = new Promotion();
-    mainWindow += promo6;
+    // Promotion* promo6 = new Promotion();
+    // mainWindow += promo6;
 
-    Promotion* promo7 = new Promotion();
-    mainWindow += promo7;
+    // Promotion* promo7 = new Promotion();
+    // mainWindow += promo7;
 
 
     while (mainWindow.IsOpen()) {
@@ -190,6 +190,12 @@ int main() {
 
         mainWindow.Display();
     }
+
+    FILE* serialFile = fopen("TracerConfig.txt", "w");
+
+    tracer->Serialize(serialFile, 0);
+
+    fclose(serialFile);
 }
 
 void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec) {

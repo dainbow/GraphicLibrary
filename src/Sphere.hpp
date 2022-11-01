@@ -14,7 +14,7 @@ class Sphere final : public BaseObject {
         center_(center), radius_(radius)
         {};
 
-        
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override;
         bool IsOnSphere(const Vector3D& point) const;
 
         Vector3D GetOutsideNormal(const Ray& ray) const override;

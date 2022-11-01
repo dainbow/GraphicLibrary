@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Serialize.hpp"
+
 #include "Color.hpp"
 #include "Vector3d.hpp"
 
-struct Texture {
+struct Texture : public Serializeable {
     virtual MyColor GetColor(const Vector3D& point) const = 0;
 
     virtual ~Texture() {};
@@ -21,6 +23,16 @@ struct ConstColor : public Texture {
 
         return color_;
     };
+
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+
+        fprintf(outStream, "{CCLR, ");
+
+        color_.Serialize(outStream, depth + 1);
+
+        fprintf(outStream, "}\n");
+    }
 };
 
 struct Squares : public Texture {
@@ -28,16 +40,19 @@ struct Squares : public Texture {
     oddTexture_(oddText), evenTexture_(evenText), radius_(radius)
     {}
 
-    Squares(const Squares& sqr) :
-    oddTexture_(sqr.oddTexture_), evenTexture_(sqr.evenTexture_), radius_(sqr.radius_)
-    {}
+    Squares(const Squares& sqr) = default;
+    Squares& operator=(const Squares& sqr) = default;
 
-    Squares& operator=(const Squares& sqr) {
-        oddTexture_  = sqr.oddTexture_;
-        evenTexture_ = sqr.evenTexture_;
-        radius_      = sqr.radius_;
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+        
+        fprintf(outStream, "{SQRS, "
+                           "%lg, ", radius_);
 
-        return *this;
+        oddTexture_->Serialize(outStream, depth + 1);
+        evenTexture_->Serialize(outStream, depth + 1);
+
+        fprintf(outStream, "}\n");
     }
 
     MyColor GetColor(const Vector3D& point) const override {

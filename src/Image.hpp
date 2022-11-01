@@ -5,6 +5,8 @@
 #include <iostream>
 #include <stack>
 
+#include "Serialize.hpp"
+
 #include "Window.hpp"
 #include "Button.hpp"
 
@@ -526,7 +528,7 @@ class BucketTool : public AbstractTool {
 
 class ToolButton;
 
-class ToolPalette : public DynamicWindow {
+class ToolPalette : public DynamicWindow, public Serializeable {
     private:
         ToolButton* curActive_;
 
@@ -538,6 +540,12 @@ class ToolPalette : public DynamicWindow {
 
         ToolPalette(const ToolPalette& palette)            = default;
         ToolPalette& operator=(const ToolPalette& palette) = default;
+
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+            FPutNChars(outStream, ' ', depth);
+            
+            fprintf(outStream, "{TLPT, %u, %u}\n", GetShiftX(), GetShiftY());
+        }
 
         void SetTool(ToolButton* newTool);
 };

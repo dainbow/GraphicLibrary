@@ -14,6 +14,7 @@ class Plane final : public BaseObject {
         plane_(plane), limitations_(limitations) 
         {};
 
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override;
         bool IsAtPlane(const Vector3D& point) const;
 
         Vector3D GetOutsideNormal(const Ray& ray) const override;

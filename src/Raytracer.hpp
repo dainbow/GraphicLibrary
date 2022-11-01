@@ -6,6 +6,8 @@
 #include <array>
 #include <vector>
 
+#include "Serialize.hpp"
+
 #include "Vector3d.hpp"
 #include "Image.hpp"
 
@@ -161,11 +163,13 @@ class PlaneInfo : public DynamicWindow {
 
 const int64_t tracerFrameTime = 100;
 
-class Raytracer : public Canvas {
+class Raytracer : public Canvas, public Serializeable {
     private:
         bool isRerender_;
         bool isNewObjects_;
+
         List* objectsList_;
+        ToolPalette* palette_;
 
         std::vector<BaseObject*> objects_;
 
@@ -286,11 +290,11 @@ class Raytracer : public Canvas {
         const Vector3D& cameraCoords,
         float virtualW, float virtualH,
         float displayD, ToolPalette* palette, List* objects = nullptr):
-
         Canvas(x, y, width, height, palette),
         isRerender_(1),
         isNewObjects_(1), 
         objectsList_(objects),
+        palette_(palette),
         objects_(),
         SuperSamplingCoef_(SuperSamplingCoef), MaxRecursionDepth_(maxRecurs),
         cameraCoords_(cameraCoords),
@@ -298,8 +302,43 @@ class Raytracer : public Canvas {
         displayDistance_(displayD),
         graphSettings_(TracerGraphics::CustomGraphics),
         renderRow_(-double(height) / 2)
-        {
+        {}
+
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+            FPutNChars(outStream, ' ', depth);
+
+            fprintf(outStream, "{RTRC, " 
+                               "%u, %u, "
+                               "%ld, %ld, "
+                               "%lg, "
+                               "%u, "
+                               "%lg, %lg, %lg, "
+                               "%g, %g, "
+                               "%g, ",
+                               GetShiftX(), GetShiftY(), 
+                               GetWidth(), GetHeight(), 
+                               SuperSamplingCoef_,
+                               MaxRecursionDepth_,
+                               cameraCoords_.x_, cameraCoords_.y_, cameraCoords_.z_,
+                               virtualWidth_, virtualHeight_,
+                               displayDistance_
+                               );
             
+            fprintf(outStream, "{");
+            for (uint64_t curObject = 0; curObject < objects_.size(); curObject++) {
+                objects_[curObject]->Serialize(outStream, depth + 1);
+            }
+            fprintf(outStream, "}");
+
+            if (palette_) {
+                palette_->Serialize(outStream, depth + 1);
+            }
+
+            if (objectsList_) {
+                objectsList_->Serialize(outStream, depth + 1);
+            }
+
+            fprintf(outStream, "}\n");
         }
 
         TracerGraphics GetGraphics() {

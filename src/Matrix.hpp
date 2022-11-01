@@ -5,9 +5,11 @@
 #include <cassert>
 #include <algorithm>
 
+#include "Serialize.hpp"
+
 #include "Utilities.hpp"
 
-class Matrix {
+class Matrix : public Serializeable {
     public:
         double** array_;
 
@@ -28,6 +30,22 @@ class Matrix {
                     array_[curRow][curColumn] = cloneMatrix.array_[curRow][curColumn];
                 }
             }
+        }
+
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+            FPutNChars(outStream, ' ', depth);
+            
+            fprintf(outStream, "{MTRX, "
+                               "%u, %u, ",
+                               rowsAmount_, columnAmount_);
+
+            for (uint32_t curRow = 0; curRow < rowsAmount_; curRow++) {
+                for (uint32_t curColumn = 0; curColumn < columnAmount_; curColumn++) {
+                    fprintf(outStream, "%lg, ", array_[curRow][curColumn]);
+                }
+            }
+
+            fprintf(outStream, "}\n");
         }
 
         Matrix& operator=(const Matrix& cloneMatrix);

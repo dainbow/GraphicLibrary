@@ -4,7 +4,10 @@
 #include <cstdint>
 #include <cmath>
 
-class MyColor {
+#include "Utilities.hpp"
+#include "Serialize.hpp"
+
+class MyColor : public Serializeable {
     public:
         uint8_t red_;
         uint8_t green_;
@@ -32,6 +35,12 @@ class MyColor {
             red_   = uint8_t(red   * double(0xFF));
             green_ = uint8_t(green * double(0xFF));
             blue_  = uint8_t(blue  * double(0xFF));
+        }
+
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+            FPutNChars(outStream, ' ', depth);
+
+            fprintf(outStream, "{MCLR, %d, %d, %d}\n", red_, green_, blue_);
         }
 
         void ClampFloats() {

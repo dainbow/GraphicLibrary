@@ -24,3 +24,11 @@ double ConvertSysToSys(const double value, const double min1, const double max1,
 
     return result;
 }
+
+void FPutNChars(FILE* stream, char ch, uint32_t amount) {
+    fputc('\n', stream);
+    
+    while(amount--) {
+        fputc(ch, stream);
+    }
+}

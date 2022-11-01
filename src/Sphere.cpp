@@ -1,5 +1,20 @@
 #include "Sphere.hpp"
 
+void Sphere::Serialize(FILE* outStream, uint32_t depth) const {
+    FPutNChars(outStream, ' ', depth);
+    
+    fprintf(outStream, "{SPHR, "
+                       "%lg, %lg, %lg, "
+                       "%lg, ",
+                       center_.x_, center_.y_, center_.z_,
+                       radius_);
+    if (objectMaterial_) {
+        objectMaterial_->Serialize(outStream, depth + 1);
+    }
+
+    fprintf(outStream, "}\n");
+}
+
 bool Sphere::IsOnSphere(const Vector3D& point) const {
     if (!CmpDbl(pow(center_.x_ - point.x_, 2) + pow(center_.y_ - point.y_, 2) + pow(center_.z_ - point.z_, 2), 
                     pow(radius_, 2))) {

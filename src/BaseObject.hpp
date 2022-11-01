@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "Serialize.hpp"
+
 #include "HitInfo.hpp"
 #include "LightSource.hpp"
 #include "Ray.hpp"
@@ -9,7 +11,7 @@
 #include "Texture.hpp"
 
 struct HitInfo;
-struct Material {
+struct Material : public Serializeable {
     virtual Ray GetProcessedRay(const Ray& fallingRay, const HitInfo& info,
                                 MyColor* colorAbsorbed) const = 0;
 
@@ -22,7 +24,7 @@ struct Material {
 
 class Raytracer;
 
-class BaseObject {
+class BaseObject : public Serializeable {
     public:
         const Material* objectMaterial_;
         std::string name_;
@@ -77,6 +79,16 @@ struct Mirror : public Material {
     albedo_(mirror.albedo_)
     {};
 
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+
+        fprintf(outStream, "{MRRR, ");
+
+        albedo_->Serialize(outStream, depth + 1);
+
+        fprintf(outStream, "}\n");
+    }
+
     Mirror& operator=(const Mirror& mirror) {
         albedo_ = mirror.albedo_;
 
@@ -109,6 +121,16 @@ struct Scattering : public Material {
     albedo_(scatt.albedo_)
     {}
 
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+
+        fprintf(outStream, "{STTR, ");
+
+        albedo_->Serialize(outStream, depth + 1);
+
+        fprintf(outStream, "}\n");
+    }
+
     Scattering& operator=(const Scattering& scatt) {
         albedo_ = scatt.albedo_;
 
@@ -138,6 +160,12 @@ struct Transparent : public Material {
     Transparent(double materialCoef, double externCoef = 1) :
     materialRefractionCoef_(materialCoef), externRefractionCoef_(externCoef)
     {}
+
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+
+        fprintf(outStream, "{TRNS, %lg, %lg}\n", materialRefractionCoef_, externRefractionCoef_);
+    }
 
     Ray GetProcessedRay(const Ray& fallingRay, const HitInfo& info,
                         MyColor* colorAbsorbed) const override 
@@ -208,6 +236,16 @@ struct DiffLight : public Material {
     DiffLight(const DiffLight& diff):
     emitLight_(diff.emitLight_)
     {};
+
+    virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+        FPutNChars(outStream, ' ', depth);
+        
+        fprintf(outStream, "{DFFL, ");
+
+        emitLight_->Serialize(outStream, depth + 1);
+
+        fprintf(outStream, "}\n");
+    }
 
     DiffLight& operator=(const DiffLight diff) {
         emitLight_ = diff.emitLight_;

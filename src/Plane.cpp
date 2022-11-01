@@ -1,5 +1,18 @@
 #include "Plane.hpp"
 
+void Plane::Serialize(FILE* outStream, uint32_t depth) const {
+    FPutNChars(outStream, ' ', depth);
+
+    fprintf(outStream, "{PLNN, ");
+    
+    plane_.Serialize(outStream, depth + 1);
+    limitations_.Serialize(outStream, depth + 1);
+    
+    objectMaterial_->Serialize(outStream, depth + 1);
+
+    fprintf(outStream, "}\n");
+}
+
 bool Plane::IsAtPlane(const Vector3D& point) const {
     bool flag = 1;
 

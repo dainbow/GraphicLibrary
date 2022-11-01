@@ -400,7 +400,7 @@ class ScrollBar : public Window {
 
 const uint32_t defaultBarWidth = 20;
 
-class List : public LimitedWindow {
+class List : public LimitedWindow, public Serializeable {
     protected:
         ScrollBar* scrollBar_;
     public:
@@ -411,6 +411,12 @@ class List : public LimitedWindow {
 
         List(const List& list) = default;
         List& operator=(const List& list) = default;
+
+        virtual void Serialize(FILE* outStream, uint32_t depth) const override {
+            FPutNChars(outStream, ' ', depth);
+            
+            fprintf(outStream, "{LIST, %u, %u, %ld, %ld}\n", GetShiftX(), GetShiftY(), GetWidth(), GetHeight());
+        }
 
         virtual void OnMove(const Event& curEvent) override {
             LimitedWindow::OnMove(curEvent);
