@@ -19,12 +19,6 @@ enum class SkinIdxs {
     BarProgress          = 11,
     InactiveText         = 12,
     ActiveText           = 13,
-    LineTool             = 14,
-    BrushTool            = 15,
-    EraserTool           = 16,
-    RectTool             = 17,
-    EllipsTool           = 18,
-    BucketTool           = 19,
 
     COUNT,
 }; 
@@ -34,8 +28,8 @@ class SkinManager {
         sf::Texture* textures_;
 
     public:
-        SkinManager(const SkinManager& manager) = default;
-        SkinManager& operator=(const SkinManager& manager) = default;
+        SkinManager(const SkinManager& manager)            = delete;
+        SkinManager& operator=(const SkinManager& manager) = delete;
 
         SkinManager(const std::string& skinName) :
         textures_(nullptr) 

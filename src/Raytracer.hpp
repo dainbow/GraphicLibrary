@@ -10,6 +10,7 @@
 
 #include "Vector3d.hpp"
 #include "Image.hpp"
+#include "Tools.hpp"
 
 #include "BaseObject.hpp"
 #include "Matrix.hpp"
@@ -369,7 +370,7 @@ class Raytracer : public Canvas, public Serializeable {
             graphSettings_ = TracerGraphics::HightGraphics;
         }
 
-        virtual void operator+=(BaseObject* obj) {
+        virtual void AddObject(BaseObject* obj) {
             obj->parent_ = this;
             objects_.push_back(obj);
 

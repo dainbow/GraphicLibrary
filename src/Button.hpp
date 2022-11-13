@@ -47,7 +47,7 @@ class Button : public Window {
         virtual void OnMove(const Event& curEvent) override {
             Window::OnMove(curEvent);
 
-            MoveHover({curEvent.mouseMove.x, curEvent.mouseMove.y});
+            MoveHover({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y});
         }
 
         void SetHandler(BaseHandler<CordsPair>* newHandler) {
@@ -70,7 +70,7 @@ class Button : public Window {
             Window::OnClick(curEvent);
 
             if (clickAction_) {
-                clickAction_->Call({curEvent.mouseButton.x, curEvent.mouseButton.y});
+                clickAction_->Call({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y});
             }
         }
 
@@ -281,13 +281,13 @@ class ScrollBar : public Window {
         virtual void OnMove(const Event& curEvent) override {
             Window::OnMove(curEvent);
 
-            MoveAtBar({curEvent.mouseMove.x, curEvent.mouseMove.y});
+            MoveAtBar({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y});
         }
 
         virtual void OnClick(const Event& curEvent) override {
             Window::OnClick(curEvent);
 
-            ClickAtBar({curEvent.mouseButton.x, curEvent.mouseButton.y});
+            ClickAtBar({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y});
         }
 
         virtual void OnTick(const Event& curEvent) override {
@@ -507,7 +507,7 @@ class TextField : public Button {
         virtual void OnKeyboard(const Event& curEvent) override {
             Button::OnKeyboard(curEvent);
 
-            TextKeyPressed(curEvent.key.code);
+            TextKeyPressed(curEvent.Oleg_.kpedata.code);
         }
 
     private:
@@ -530,28 +530,28 @@ class TextField : public Button {
 
         virtual void MoveHover([[maybe_unused]] const CordsPair& coords) override {}
 
-        virtual void TextKeyPressed(const sf::Keyboard::Key& key) {
+        virtual void TextKeyPressed(const Key& key) {
             if (isClicked_) {
                 std::string tempString = *text_.GetRealString();
 
-                if (key == sf::Keyboard::Backspace) {
+                if (key == Key::Backspace) {
                     if (tempString.size() > 0) {
                         tempString.pop_back();
                     }
                 }
-                else if ((key >= sf::Keyboard::A) && (key <= sf::Keyboard::Z)) {
-                    tempString += char('a' + (key - sf::Keyboard::A));
+                else if ((key >= Key::A) && (key <= Key::Z)) {
+                    tempString += char('a' + (key - Key::A));
                 }
-                else if ((key >= sf::Keyboard::Num0) && (key <= sf::Keyboard::Num9)) {
-                    tempString += char('0' + (key - sf::Keyboard::Num0));
+                else if ((key >= Key::Num0) && (key <= Key::Num9)) {
+                    tempString += char('0' + (key - Key::Num0));
                 }
-                else if (key == sf::Keyboard::Space) {
+                else if (key == Key::Space) {
                     tempString += ' ';
                 }
-                else if (key == sf::Keyboard::Hyphen) {
+                else if (key == Key::Hyphen) {
                     tempString += '-';
                 }
-                else if (key == sf::Keyboard::Period) {
+                else if (key == Key::Period) {
                     tempString += '.';
                 }
 

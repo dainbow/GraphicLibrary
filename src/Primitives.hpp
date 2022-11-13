@@ -3,8 +3,11 @@
 #include <SFML/Graphics.hpp>
 #include <cstdint>
 
+#include "../Tools/src/tools.hpp"
+
 #include "Color.hpp"
 #include "CordsPair.hpp"
+#include "Vector.hpp"
 
 const double TextScalar = 0.75;
 
@@ -32,7 +35,7 @@ class Rectangle {
         }
 };
 
-class Image {
+class Image : public booba::Image {
     private:
         sf::Image realImage_ = {};
 
@@ -41,6 +44,32 @@ class Image {
         uint32_t height_ = 0;
 
         float rotation_ = 0;
+
+        ~Image() = default;
+
+        virtual uint32_t getH() override {
+            return height_;
+        }
+
+        virtual uint32_t getX() override {
+            return width_;
+        }
+
+        virtual uint32_t getPixel(int32_t x, int32_t y) override {
+            return GetPixel(x, y);
+        }
+
+        virtual void putPixel(uint32_t x, uint32_t y, uint32_t color) override {
+            SetPixel(x, y, color);
+        }
+
+        virtual uint32_t& operator()(uint32_t, uint32_t) override {
+            return width_;
+        }
+
+        virtual const uint32_t& operator()(uint32_t, uint32_t) const override {
+            return height_;
+        }
 
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
             realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_});

@@ -35,3 +35,7 @@ void HighGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair&
 
 void AddSphereToTracer(CustomButton<Raytracer>* button, const CordsPair& vec);
 void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec);
+
+void SwapColors(Button* button, const CordsPair& vec);
+void CloseWindow(CustomButton<RealWindow>* button, const CordsPair& vec);
+void SelectColor(CustomButton<booba::ApplicationContext>* button, const CordsPair& vec);

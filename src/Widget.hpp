@@ -10,7 +10,6 @@
 #include "Primitives.hpp"
 
 class Window;
-using Event = sf::Event;
 
 #define RAZOR_SHARK OnMove
 #define FIRE_HOPPER OnClick
@@ -80,7 +79,7 @@ class Widget {
         }
 
         virtual void FIRE_HOPPER(const Event& curEvent) {
-            CordsPair curCords = {curEvent.mouseButton.x, curEvent.mouseButton.y};
+            CordsPair curCords = {curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y};
 
             FlagClicked(curCords);
             FlagHolded(curCords);

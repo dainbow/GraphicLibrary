@@ -64,6 +64,10 @@ class MyColor : public Serializeable {
             blue_  = uint8_t(fBlue_  * 0xff);
         }
 
+        operator uint32_t() const {
+            return (uint32_t(red_) << 24u) + (uint32_t(green_) << 16u) + (uint32_t(blue_) << 8u);
+        }
+
         bool operator==(const MyColor& cmpColor) const {
             return (red_ == cmpColor.red_) && (green_ == cmpColor.green_) && (blue_ == cmpColor.blue_);
         }
@@ -119,4 +123,41 @@ class MyColor : public Serializeable {
         }
 };
 
+class MyHSV {
+    public:
+        double h_;
+        double s_;
+        double v_;
+};
+
+class Gradienter {
+    private:
+        double start_;
+        double end_;
+        double size_;
+
+        double inc_;
+    public:
+        Gradienter(double start, double end, double size) :
+        start_(start), end_(end), size_(size), inc_((end - start) / size)
+        {}
+
+        double GetValue() {
+            return start_;
+        }
+
+        Gradienter operator++(int) {
+            start_ += inc_;
+
+            return *this;
+        }
+
+        Gradienter operator--(int) {
+            start_ -= inc_;
+
+            return *this;
+        }
+};
+
+MyColor ConvertHSVToRGB(const MyHSV& hsv);
 std::ostream& operator<<(std::ostream& outStream, const MyColor& color);

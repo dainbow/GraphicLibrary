@@ -1,14 +1,26 @@
 #include "Main.hpp"
 
+booba::ApplicationContext* booba::APPCONTEXT = nullptr;
+
 int main() {
+    // std::cout << ConvertHSVToRGB({0, 100, 100}) << std::endl;
+    // return 0;
+
     SkinManager::GetInstance("default");
-    RealWindow mainWindow(1000, 500);
+    RealWindow mainWindow(1600, 900);
+
+    //
+    // APPCONTEXT INIT
+    //
+    
+    booba::APPCONTEXT = new booba::ApplicationContext();
+    booba::APPCONTEXT->bgColor = 0xffffff00;
 
     //
     // TRACER OBJECTLIST CONFIG
     //
 
-    List* objectsList = new List(700, 20, 250, 400);
+    List* objectsList = new List(1300, 20, 250, 860);
     mainWindow += objectsList;
 
     //
@@ -19,16 +31,26 @@ int main() {
     mainWindow += tracerPalette;
 
     //
+    // COLORS DISPLAY
+    //
+
+    ColorWatcher* fgWatcher = new ColorWatcher(100, 50, 40, 40, &booba::APPCONTEXT->fgColor);
+    mainWindow += fgWatcher;
+
+    ColorWatcher* bgWatcher = new ColorWatcher(120, 70, 40, 40, &booba::APPCONTEXT->bgColor);
+    mainWindow += bgWatcher;
+
+    //
     // TRACER INIT
     //
 
-    Raytracer* tracer = new Raytracer(0, 0, 460, 460, 1, 4, {0, 0, 0}, 10, 10, 10, tracerPalette, objectsList);
+    Raytracer* tracer = new Raytracer(0, 0, 1000, 1000, 1, 4, {0, 0, 0}, 10, 10, 10, tracerPalette, objectsList);
 
     //
     // TracerWindow Init
     //
 
-    Window* tracerWindow = new Window(200, 20, 400, 400);
+    Window* tracerWindow = new Window(400, 20, 800, 800);
     *tracerWindow += tracer;
     mainWindow += tracerWindow;
 
@@ -36,7 +58,7 @@ int main() {
     // ProgressBar Init
     //
 
-    ProgressBar* traceProgress = new ProgressBar(200, 440, 400, 30, &tracer->renderRow_, -double(tracer->GetHeight()) / 2, double(tracer->GetHeight()) / 2);
+    ProgressBar* traceProgress = new ProgressBar(400, 840, 800, 30, &tracer->renderRow_, -double(tracer->GetHeight()) / 2, double(tracer->GetHeight()) / 2);
     mainWindow += traceProgress;
 
     //
@@ -106,6 +128,32 @@ int main() {
     control = {tracer, lowGraphics, midGraphics, highGraphics};
 
     //
+    // COLOR DROPLIST CONFIG
+    //
+
+    DropList* colorDrop = new DropList(140, 0, 70, 30);
+    colorDrop->SetText("Color", 0xfefe2200);
+    mainWindow += colorDrop;
+
+    //
+    // SELECT COLOR CONFIG
+    //
+
+    CustomButton<booba::ApplicationContext>* selectTool = new CustomButton<booba::ApplicationContext>(0, 0, 70, 20, booba::APPCONTEXT);
+    selectTool->SetHandler(new FuncCaller<CustomButton<booba::ApplicationContext>, CordsPair>(selectTool, SelectColor));
+    selectTool->SetText("Select", 0xfefe2200);
+    *colorDrop += selectTool;
+
+    //
+    // SWAP COLOR CONFIG
+    //
+
+    Button* swapButton = new Button(0, 0, 70, 20);
+    swapButton->SetText("Swap", 0xfefe2200);
+    swapButton->SetHandler(new FuncCaller<Button, CordsPair>(swapButton, SwapColors));
+    *colorDrop += swapButton;
+
+    //
     // TRACER CONFIG
     //
 
@@ -138,24 +186,24 @@ int main() {
 
     Sphere* sph1 = new Sphere({-11, 13, 32}, 2, &redMirror);
     sph1->name_ = "LittleSphere";
-    *tracer += sph1;
+    tracer->AddObject(sph1);
 
     Sphere* sph2 = new Sphere({-5, 9.9, 37}, 5, &greenMirror);
     sph2->name_ = "MidSphere";
-    *tracer += sph2;
+    tracer->AddObject(sph2);
 
     Sphere* sph3 = new Sphere({8, 9.9, 37}, 5, &glass);
     sph3->name_ = "BigGlassSphere";
-    *tracer += sph3;
+    tracer->AddObject(sph3);
 
     Sphere* sph5 = new Sphere({5, 4.9, 60}, 10, &squareScat);
 
     sph5->name_ = "BigPinkSphere";
-    *tracer += sph5;
+    tracer->AddObject(sph5);
 
     Plane* pln1 = GetXZPlane(&squareScat, 15, -15, 15, 10, 60);
     pln1->name_ = "SquaredFloor";
-    *tracer += pln1;
+    tracer->AddObject(pln1);
 
     //
     // Promo config
@@ -192,10 +240,10 @@ int main() {
     }
 
     FILE* serialFile = fopen("TracerConfig.txt", "w");
-
     tracer->Serialize(serialFile, 0);
 
     fclose(serialFile);
+    delete booba::APPCONTEXT;
 }
 
 void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec) {
@@ -253,7 +301,7 @@ void AddSphereToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
     ConstColor* white      = new ConstColor(0xffffff00);
     Scattering* whiteScat  = new Scattering(white);
 
-    *button->GetContext() += new Sphere({0, 0, 0}, 0, whiteScat);
+    button->GetContext()->AddObject(new Sphere({0, 0, 0}, 0, whiteScat));
 }
 
 void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
@@ -264,5 +312,59 @@ void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
     ConstColor* white      = new ConstColor(0xffffff00);
     Scattering* whiteScat  = new Scattering(white);
 
-    *button->GetContext() += GetXZPlane(whiteScat, 0);
+    button->GetContext()->AddObject(GetXZPlane(whiteScat, 0));
+}
+
+void CloseWindow(CustomButton<RealWindow>* button, const CordsPair& vec) {
+    if (!button->IsClicked(vec)) {
+        return;
+    }
+
+    button->GetContext()->Close();
+}
+
+void SwapColors(Button* button, const CordsPair& vec) {
+    if (!button->IsClicked(vec)) {
+        return;
+    }
+
+    std::swap(booba::APPCONTEXT->bgColor, booba::APPCONTEXT->fgColor);
+}
+
+void SelectColor(CustomButton<booba::ApplicationContext>* button, const CordsPair& vec) {
+    if (!button->IsClicked(vec))
+        return;
+
+
+    RealWindow popUp(500, 500);
+
+    GradientChooser* choose = new GradientChooser(20, 20, 400, 400, 0);
+    popUp += choose;
+
+    HChooser* hChooser = new HChooser(440, 20, 20, 400, choose);
+    popUp += hChooser;
+
+    CustomButton<RealWindow>* closeButton = new CustomButton<RealWindow>(20, 430, 100, 40, &popUp);
+    closeButton->SetText("CLOSE", 0xFF000000);
+    closeButton->SetHandler(new FuncCaller<CustomButton<RealWindow>, CordsPair>(closeButton, CloseWindow));
+    popUp += closeButton;
+
+    Button* swapButton = new Button(140, 430, 100, 40);
+    swapButton->SetText("SWAP", 0x00FF0000);
+    swapButton->SetHandler(new FuncCaller<Button, CordsPair>(swapButton, SwapColors));
+    popUp += swapButton;
+
+    ColorWatcher* fgWatcher = new ColorWatcher(260, 430, 40, 40, &booba::APPCONTEXT->fgColor);
+    popUp += fgWatcher;
+
+    ColorWatcher* bgWatcher = new ColorWatcher(280, 450, 40, 40, &booba::APPCONTEXT->bgColor);
+    popUp += bgWatcher;
+
+    while (popUp.IsOpen()) {
+        popUp.Clear();
+
+        popUp.PollEvent();
+
+        popUp.Display();
+    }
 }
