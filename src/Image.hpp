@@ -254,7 +254,7 @@ class GradientChooser : public ImageWindow {
 
         void SetH(double newH) {
             if ((newH >= 0) && (newH <= 360)) {
-                if (curH_ != newH) {
+                if (!CmpDbl(curH_, newH)) {
                     SetChanged();
                 }
 
@@ -308,6 +308,9 @@ class HChooser : public ImageWindow {
         slave_(slave)
         {}
 
+        HChooser(const HChooser& otherChooser)            = delete;
+        HChooser& operator=(const HChooser& otherChooser) = delete;
+
         virtual void OnClick(const Event& curEvent) override {
             Window::OnClick(curEvent);
 
@@ -351,6 +354,9 @@ class ColorWatcher : public ImageWindow {
         colorPtr_(ptr),
         lastColor_(*colorPtr_)
         {}
+
+        ColorWatcher(const ColorWatcher& otherWatcher)            = delete;
+        ColorWatcher& operator=(const ColorWatcher& otherWatcher) = delete;
 
         virtual void OnTick(const Event& curEvent) override {
             UpdateColors();

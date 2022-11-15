@@ -1,4 +1,4 @@
-#include "DainTools.hpp"
+#include "DainTools.hpp" 
 
 int64_t GetTimeMiliseconds() {
     auto curTime = std::chrono::system_clock::now();
@@ -9,6 +9,16 @@ int64_t GetTimeMiliseconds() {
 }
 
 void LineTool::apply(booba::Image* image, const booba::Event* event) {
+    if (image == nullptr) {
+        if (event->type == booba::EventType::ScrollbarMoved) {
+            if (event->Oleg.smedata.id == sizeScrollIdx_) {
+                lineSize_ = std::max(1, event->Oleg.smedata.value / 2);
+            }
+        }
+
+        return;
+    }
+
     if (event->type != booba::EventType::MousePressed)
         return;
 
@@ -20,14 +30,29 @@ void LineTool::apply(booba::Image* image, const booba::Event* event) {
     else {
         CordsPair secondClick = curClick;
 
-        printf("fgColor is %x\n", booba::APPCONTEXT->fgColor);
-        DrawLine(image, firstClick_, secondClick, booba::APPCONTEXT->fgColor);
+        DrawBigLine(firstClick_, secondClick, lineSize_, image);
 
         firstClick_ = {-1, -1};
     }
 }
 
+void LineTool::buildSetupWidget() {
+    booba::createLabel(20, 20, 300, 40, "Line size");
+
+    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30);
+}
+
 void BrushTool::apply(booba::Image* image, const booba::Event* event) {
+    if (image == nullptr) {
+        if (event->type == booba::EventType::ScrollbarMoved) {
+            if (event->Oleg.smedata.id == sizeScrollIdx_) {
+                brushSize_ = std::max(1, event->Oleg.smedata.value / 2);
+            }
+        }
+
+        return;
+    }
+
     if (event->type == booba::EventType::MousePressed) {
         isClicked_ = 1;
         lastPoint_ = {-1, -1};
@@ -53,11 +78,17 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
     CordsPair moveCords = {event->Oleg.motion.rel_x, event->Oleg.motion.rel_y};
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
-        LineTool::DrawLine(image, lastPoint_, moveCords, booba::APPCONTEXT->fgColor);
+        LineTool::DrawBigLine(lastPoint_, moveCords, brushSize_, image);
     }
 
     lastPoint_ = moveCords;
     lastTime_  = GetTimeMiliseconds();
+}
+
+void BrushTool::buildSetupWidget() {
+    booba::createLabel(20, 20, 400, 40, "Brush size");
+
+    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30);
 }
 
 void EraserTool::apply(booba::Image* image, const booba::Event* event)  {

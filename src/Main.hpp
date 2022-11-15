@@ -24,9 +24,6 @@ struct ControlGraphics {
     CustomButton<ControlGraphics>* lowButton_;
     CustomButton<ControlGraphics>* midButton_;
     CustomButton<ControlGraphics>* highButton_;
-
-    ControlGraphics(const ControlGraphics& graphics)            = default;
-    ControlGraphics& operator=(const ControlGraphics& graphics) = default;
 };
 
 void LowGraphicsOnClick(CustomButton<ControlGraphics>* button, const CordsPair& vec);

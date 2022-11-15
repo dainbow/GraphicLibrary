@@ -9,6 +9,8 @@ int main() {
     SkinManager::GetInstance("default");
     RealWindow mainWindow(1600, 900);
 
+    App::GetInstance() += &mainWindow;
+
     //
     // APPCONTEXT INIT
     //
@@ -231,12 +233,12 @@ int main() {
     // mainWindow += promo7;
 
 
-    while (mainWindow.IsOpen()) {
-        mainWindow.Clear();
+    while (App::GetInstance().IsOpen()) {
+        App::GetInstance().Clear();
 
-        mainWindow.PollEvent();
+        App::GetInstance().PollEvent();
 
-        mainWindow.Display();
+        App::GetInstance().Display();
     }
 
     FILE* serialFile = fopen("TracerConfig.txt", "w");

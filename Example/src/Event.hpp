@@ -3,8 +3,6 @@
 #include <SFML/Graphics.hpp>
 #include <list>
 
-#include "Vector.hpp"
-
 enum class EventType {
     NoEvent        = 0,
     MouseMoved     = 1,
@@ -185,7 +183,7 @@ class Event {
         KeyPressedEventData kpedata;
     } Oleg_; //Object loading event group.
 
-    explicit Event(const sf::Event& sfEvent) :
+    Event(const sf::Event& sfEvent) :
         type_(EventType::NoEvent),
         Oleg_({0, 0, 0, 0})
     {

@@ -323,21 +323,23 @@ class ScrollBar : public Window {
             valueBut_->SetParent(this);
             arrowDown_->SetParent(this);
         }
-    private:
-        void UpdateBarPosition() {
+    protected:
+        bool UpdateBarPosition() {
             if (CmpDbl(*valueToCtrl_, savedValue))
-                return;
+                return 0;
 
             if (CmpDbl((*maxValue_ - *minValue_), 0)) {
                 valueBut_->SetShifts(valueBut_->GetShiftX(), defaultArrowsHeight);
 
-                return;
+                return 1;
             }
 
             double newShift = ConvertSysToSys(*valueToCtrl_, *minValue_, *maxValue_, double(defaultArrowsHeight), double(GetHeight() - defaultArrowsHeight));
             
             valueBut_->SetShifts(valueBut_->GetShiftX(), uint32_t(newShift));
             savedValue = *valueToCtrl_;
+
+            return 1;
         }
 
         void ArrowUp(const CordsPair& cords) {

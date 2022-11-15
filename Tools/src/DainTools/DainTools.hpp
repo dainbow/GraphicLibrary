@@ -54,10 +54,14 @@ class LineTool : public AbstractTool {
     protected:
         CordsPair firstClick_;
 
+        uint64_t sizeScrollIdx_;
+        int32_t lineSize_;
     public:
         LineTool() :
         AbstractTool(),
-        firstClick_({-1, -1})
+        firstClick_({-1, -1}),
+        sizeScrollIdx_(0),
+        lineSize_(1)
         {
             toolImage_ = LineTexture;
         }
@@ -65,6 +69,19 @@ class LineTool : public AbstractTool {
         virtual ~LineTool() {}
 
         virtual void apply(booba::Image* image, const booba::Event* event) override;
+
+        static void DrawBigLine(const CordsPair& start, const CordsPair& end, int32_t radius, booba::Image* image) {
+            for (int32_t curX = std::max(0, start.x - radius); curX < std::min(int32_t(image->getX()), start.x + radius); curX++) {
+                for (int32_t curY = std::max(0, start.y - radius); curY < std::min(int32_t(image->getH()), start.y + radius); curY++) {
+                    if ((std::pow(curX - start.x, 2) + std::pow(curY - start.y, 2)) <= std::pow(radius, 2)) {
+                        if (((end.x + curX - start.x) >= 0) && ((end.x + curX - start.x) < int32_t(image->getX())) &&
+                            ((end.y + curY - start.y) >= 0) && ((end.y + curY - start .y) < int32_t(image->getH()))) {
+                            DrawLine(image, {curX, curY}, {end.x + curX - start.x, end.y + curY - start.y}, booba::APPCONTEXT->fgColor);
+                        }
+                    }
+                }
+            }
+        }
 
         static void DrawLine(booba::Image* curImage, CordsPair first, CordsPair second, const uint32_t lineColor) {
             bool trans = 0;
@@ -102,6 +119,8 @@ class LineTool : public AbstractTool {
                 }
             }
         }
+
+        virtual void buildSetupWidget() override;
 };
 
 class BrushTool : public AbstractTool {
@@ -111,13 +130,18 @@ class BrushTool : public AbstractTool {
 
         int64_t lastTime_;
         int64_t delay_;
+
+        uint64_t sizeScrollIdx_;
+        int32_t brushSize_;
     public:
         BrushTool() :
         AbstractTool(),
         lastPoint_({-1, -1}),
         isClicked_(0),
         lastTime_(0),
-        delay_(10)
+        delay_(10),
+        sizeScrollIdx_(0),
+        brushSize_(1)
         {
             toolImage_ = BrushTexture;
         }
@@ -125,6 +149,7 @@ class BrushTool : public AbstractTool {
         virtual ~BrushTool() {}
 
         virtual void apply(booba::Image* image, const booba::Event* event) override;
+        virtual void buildSetupWidget() override;
 }; 
 
 class EraserTool : public AbstractTool {

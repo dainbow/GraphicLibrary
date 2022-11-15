@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+App* App::instance_ = nullptr;
+
 // void Window::DrawCoordSystem(const CoordSystem& curSystem) const {
 //     DrawRectangle({{curSystem.x0y0_.x_ - BorderWidth, curSystem.x0y0_.y_ - BorderWidth}, {curSystem.x1y1_.x_ + BorderWidth, curSystem.x1y1_.y_ + BorderWidth}, {0x9b, 0x2d, 0x30}});
 //     DrawRectangle({curSystem.x0y0_, curSystem.x1y1_, curSystem.color_});
