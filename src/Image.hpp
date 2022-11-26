@@ -8,14 +8,14 @@
 
 #include <dlfcn.h>
 
-#include "../Tools/src/tools.hpp"
+#include "../Plugins/src/tools.hpp"
 
 #include "Serialize.hpp"
 
 #include "Window.hpp"
 #include "Button.hpp"
 
-const char DefaultToolsPath[] = "./Tools/";
+const char DefaultToolsPath[] = "./Plugins/";
 
 class ImageWindow : public Window {
     public:

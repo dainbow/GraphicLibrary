@@ -49,6 +49,7 @@ MyColor ConvertHSVToRGB(const MyHSV& hsv) {
     result.red_   = R;
     result.green_ = G;
     result.blue_  = B;
+    result.alpha_ = 0xff;
 
     return result;  
 }

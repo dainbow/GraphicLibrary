@@ -86,6 +86,7 @@ namespace booba { // boot of outstanding best api
             ScrollMovedEventData smedata;
             CanvasEventData cedata;
         } Oleg; //Object loading event group.
+
     };
 
 
@@ -120,7 +121,7 @@ namespace booba { // boot of outstanding best api
 
     extern "C" uint64_t createButton   (int32_t x, int32_t y, uint32_t w, uint32_t h, const char*);
     extern "C" uint64_t createLabel    (int32_t x, int32_t y, uint32_t w, uint32_t h, const char*);
-    extern "C" uint64_t createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h);
+    extern "C" uint64_t createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h, int32_t maxValue, int32_t startValue);
     
     extern "C" uint64_t createCanvas(int32_t x, int32_t y, int32_t w, int32_t h);
     extern "C" uint64_t putPixel (uint64_t canvas, int32_t x, int32_t y, uint32_t color);

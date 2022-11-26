@@ -20,20 +20,20 @@ void AddMaterialInfo(DynamicWindow* materialWindow, Material* material, bool* is
 
     std::cout << curObjInfo.name() << std::endl;
     if (strstr(curObjInfo.name(), "Scattering")) {
-        materialLabel->SetText("Scattering", 0xffffff00);
+        materialLabel->SetText("Scattering", 0xffffffff);
 
         AddTextureInfo(materialWindow, ((Scattering*)material)->albedo_, isChanged);
     }
     else if (strstr(curObjInfo.name(), "Transparent")) {
-        materialLabel->SetText("Transparent", 0xffffff00);
+        materialLabel->SetText("Transparent", 0xffffffff);
     }
     else if (strstr(curObjInfo.name(), "DiffLight")) {
-        materialLabel->SetText("Light", 0xffffff00);
+        materialLabel->SetText("Light", 0xffffffff);
 
         AddTextureInfo(materialWindow, ((DiffLight*)material)->emitLight_, isChanged);
     }
     else if (strstr(curObjInfo.name(), "Mirror")) {
-        materialLabel->SetText("Mirror", 0xffffff00);
+        materialLabel->SetText("Mirror", 0xffffffff);
 
         AddTextureInfo(materialWindow, ((Mirror*)material)->albedo_, isChanged);
     }
@@ -47,17 +47,17 @@ void AddTextureInfo(DynamicWindow* curWindow, const Texture* texture, bool* isCh
         *curWindow += colorWindow;
 
         CustomButton<int>* rLabel = new CustomButton<int>(0, 0, 30, 30, nullptr);
-        rLabel->SetText("R:", 0xffffff00);
+        rLabel->SetText("R:", 0xffffffff);
         *colorWindow += rLabel;
         *colorWindow += new CtrlTextField<double>(30, 0, 50, 30, &((const_cast<ConstColor*>(reinterpret_cast<const ConstColor*>(texture)))->color_.fRed_), isChanged);
         
         CustomButton<int>* gLabel = new CustomButton<int>(80, 0, 30, 30, nullptr);
-        gLabel->SetText("G:", 0xffffff00);
+        gLabel->SetText("G:", 0xffffffff);
         *colorWindow += gLabel;
         *colorWindow += new CtrlTextField<double>(110, 0, 50, 30, &((const_cast<ConstColor*>(reinterpret_cast<const ConstColor*>(texture)))->color_.fGreen_), isChanged);
         
         CustomButton<int>* bLabel = new CustomButton<int>(160, 0, 30, 30, nullptr);
-        bLabel->SetText("B:", 0xffffff00);
+        bLabel->SetText("B:", 0xffffffff);
         *colorWindow += bLabel;
         *colorWindow += new CtrlTextField<double>(190, 0, 50, 30, &((const_cast<ConstColor*>(reinterpret_cast<const ConstColor*>(texture)))->color_.fBlue_), isChanged);
     }

@@ -5,30 +5,40 @@
 #include <chrono>
 #include <cstdio>
 
+#include <string>
+#include <set>
+
 #include "../tools.hpp"
 
-const char LineTexture[]   = "./Skins/dain/Line.png";
-const char BrushTexture[]  = "./Skins/dain/Brush.png";
-const char EraserTexture[] = "./Skins/dain/Eraser.png";
-const char RectTexture[]   = "./Skins/dain/Rect.png";
-const char EllipsTexture[] = "./Skins/dain/Ellips.png";
-const char BucketTexture[] = "./Skins/dain/Bucket.png";
+const std::string soPath        = "./Icons/dain/";
+
+const std::string LineTexture   = soPath + "Line.png";
+const std::string BrushTexture  = soPath + "Brush.png";
+const std::string EraserTexture = soPath + "Eraser.png";
+const std::string RectTexture   = soPath + "Rect.png";
+const std::string EllipsTexture = soPath + "Ellips.png";
+const std::string BucketTexture = soPath + "Bucket.png";
+const std::string CurvesTexture = soPath + "Curves.png";
 
 struct CordsPair {
     int32_t x;
     int32_t y;
+
+    bool operator<(const CordsPair& p2) {
+        return x < p2.x;
+    }
 };
 
 int64_t GetTimeMiliseconds();
 
 class AbstractTool : public booba::Tool {
     protected:
-        const char* toolImage_;
+        std::string toolImage_;
         uint32_t toolIdx_;
 
     public:
         AbstractTool() :
-        toolImage_(nullptr),
+        toolImage_(),
         toolIdx_(0)
         {}
 
@@ -44,7 +54,7 @@ class AbstractTool : public booba::Tool {
         }
 
         virtual const char* getTexture() override {
-            return toolImage_;
+            return toolImage_.data();
         }
 
         virtual void buildSetupWidget() override {}
@@ -70,13 +80,13 @@ class LineTool : public AbstractTool {
 
         virtual void apply(booba::Image* image, const booba::Event* event) override;
 
-        static void DrawBigLine(const CordsPair& start, const CordsPair& end, int32_t radius, booba::Image* image) {
+        static void DrawBigLine(const CordsPair& start, const CordsPair& end, int32_t radius, booba::Image* image, const uint32_t color) {
             for (int32_t curX = std::max(0, start.x - radius); curX < std::min(int32_t(image->getX()), start.x + radius); curX++) {
                 for (int32_t curY = std::max(0, start.y - radius); curY < std::min(int32_t(image->getH()), start.y + radius); curY++) {
                     if ((std::pow(curX - start.x, 2) + std::pow(curY - start.y, 2)) <= std::pow(radius, 2)) {
                         if (((end.x + curX - start.x) >= 0) && ((end.x + curX - start.x) < int32_t(image->getX())) &&
                             ((end.y + curY - start.y) >= 0) && ((end.y + curY - start .y) < int32_t(image->getH()))) {
-                            DrawLine(image, {curX, curY}, {end.x + curX - start.x, end.y + curY - start.y}, booba::APPCONTEXT->fgColor);
+                            DrawLine(image, {curX, curY}, {end.x + curX - start.x, end.y + curY - start.y}, color);
                         }
                     }
                 }
@@ -133,6 +143,9 @@ class BrushTool : public AbstractTool {
 
         uint64_t sizeScrollIdx_;
         int32_t brushSize_;
+
+        uint64_t transScrollIdx_;
+        double transparency_;
     public:
         BrushTool() :
         AbstractTool(),
@@ -141,7 +154,8 @@ class BrushTool : public AbstractTool {
         lastTime_(0),
         delay_(10),
         sizeScrollIdx_(0),
-        brushSize_(1)
+        brushSize_(1),
+        transScrollIdx_(0), transparency_(1)
         {
             toolImage_ = BrushTexture;
         }

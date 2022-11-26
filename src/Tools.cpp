@@ -6,6 +6,10 @@ void booba::addTool(booba::Tool* tool) {
     ToolManager::GetInstance().AddTool(tool);
 }
 
+void booba::addFilter(booba::Tool* tool) {
+    addTool(tool);
+}
+
 ToolManager::ToolManager() :
 activeTool_(nullptr),
 tools_(),
@@ -39,7 +43,7 @@ void ToolPalette::SetTool(ToolButton* newTool) {
 uint64_t booba::createButton(int32_t x, int32_t y, uint32_t w, uint32_t h, const char* text) {
     ButtonForTool* newButton = new ButtonForTool(x, y, w, h);
     if (text) {
-        newButton->SetText(text);
+        newButton->SetText(text, 0xffffffff);
     }
 
     *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newButton;
@@ -47,8 +51,8 @@ uint64_t booba::createButton(int32_t x, int32_t y, uint32_t w, uint32_t h, const
     return reinterpret_cast<uint64_t>(newButton);
 }
 
-uint64_t booba::createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h) {
-    ScrollBarForTool* newScroll = new ScrollBarForTool(x, y, h, w);
+uint64_t booba::createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h, int32_t maxValue, int32_t startValue) {
+    ScrollBarForTool* newScroll = new ScrollBarForTool(x, y, h, w, double(maxValue), double(startValue));
     newScroll->SetRotation(-float(M_PI_2));
 
     *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newScroll;
@@ -59,7 +63,7 @@ uint64_t booba::createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h) {
 uint64_t booba::createLabel(int32_t x, int32_t y, uint32_t w, uint32_t h, const char* text) {
     CustomButton<int32_t>* newLabel = new CustomButton<int32_t>(x, y, w, h, nullptr);
     if (text) {
-        newLabel->SetText(text, 0xffffff00);
+        newLabel->SetText(text, 0xffffffff);
     }
 
     *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newLabel;
@@ -71,8 +75,17 @@ uint64_t booba::putPixel(uint64_t canvas, int32_t x, int32_t y, uint32_t color) 
     CanvasForTool* curCanvas = reinterpret_cast<CanvasForTool*>(canvas);
 
     curCanvas->image_.SetPixel(x, y, color);
+    curCanvas->SetChanged();
 
     return canvas;
+}
+
+uint64_t booba::createCanvas(int32_t x, int32_t y, int32_t w, int32_t h) {
+    CanvasForTool* newCanvas = new CanvasForTool(x, y, w, h);
+
+    *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newCanvas;
+
+    return reinterpret_cast<uint64_t>(newCanvas);
 }
 
 uint64_t booba::putSprite(uint64_t canvas, int32_t x, int32_t y, uint32_t w, uint32_t h, const char* texture) {

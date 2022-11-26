@@ -12,11 +12,14 @@ DEPENDENCES = $(addsuffix .d,$(OBJECTS))
 
 EXECUTABLE = Graph.out
 
-$(EXECUTABLE): $(OBJECTS) ./Tools/dain.so
+$(EXECUTABLE): $(OBJECTS) ./Plugins/dain.so ./Plugins/curves.so
 	@$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-./Tools/dain.so: ./Tools/src/DainTools/DainTools.cpp ./Tools/src/DainTools/DainTools.hpp ./Tools/src/tools.hpp
-	@$(CC) -shared -Wall -Wextra -o ./Tools/dain.so -fPIC ./Tools/src/DainTools/DainTools.cpp
+./Plugins/curves.so: ./Plugins/src/DainCurves/DainCurves.cpp ./Plugins/src/DainCurves/DainCurves.hpp ./Plugins/src/tools.hpp
+	@$(CC) -shared -Wall -Wextra -o ./Plugins/curves.so -fPIC ./Plugins/src/DainCurves/DainCurves.cpp
+
+./Plugins/dain.so: ./Plugins/src/DainTools/DainTools.cpp ./Plugins/src/DainTools/DainTools.hpp ./Plugins/src/tools.hpp
+	@$(CC) -shared -Wall -Wextra -o ./Plugins/dain.so -fPIC ./Plugins/src/DainTools/DainTools.cpp
 
 $(BINDIR)%.o: $(SRCDIRS)%.cpp
 	@$(CC) -MMD -MF $@.d $(CXXFLAGS) $< -o $@

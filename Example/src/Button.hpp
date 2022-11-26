@@ -19,7 +19,7 @@ class Button : public Window {
         Button(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
         Window(x, y, width, height),
         clickAction_(nullptr),
-        hoveredColor_(0x80808000), clickedColor_(0x9400d300),
+        hoveredColor_(0x808080ff), clickedColor_(0x9400d3ff),
         isHovered_(0)
         {   
             widgetColor_ = 0;

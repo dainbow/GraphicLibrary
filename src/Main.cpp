@@ -16,7 +16,8 @@ int main() {
     //
     
     booba::APPCONTEXT = new booba::ApplicationContext();
-    booba::APPCONTEXT->bgColor = 0xffffff00;
+    booba::APPCONTEXT->bgColor = 0xffffffff;
+    booba::APPCONTEXT->fgColor = 0x000000ff;
 
     //
     // TRACER OBJECTLIST CONFIG
@@ -68,7 +69,7 @@ int main() {
     //
 
     DropList* graphicsButton = new DropList(0, 0, 70, 30);
-    graphicsButton->SetText("Modes", 0xfefe2200);
+    graphicsButton->SetText("Modes", 0xfefe22ff);
     mainWindow += graphicsButton;
 
     ControlGraphics control = {tracer, nullptr, nullptr, nullptr};
@@ -79,7 +80,7 @@ int main() {
     //
 
     DropList* addObject = new DropList(70, 0, 70, 30);
-    addObject->SetText("Add", 0xfefe2200);
+    addObject->SetText("Add", 0xfefe22ff);
     mainWindow += addObject;
 
     //
@@ -88,7 +89,7 @@ int main() {
 
     CustomButton<Raytracer>* buttonToAddSphere = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
     buttonToAddSphere->SetHandler(new FuncCaller<CustomButton<Raytracer>, CordsPair>(buttonToAddSphere, AddSphereToTracer));
-    buttonToAddSphere->SetText("Sphere", 0xfefe2200);
+    buttonToAddSphere->SetText("Sphere", 0xfefe22ff);
     *addObject += buttonToAddSphere;
 
     //
@@ -97,7 +98,7 @@ int main() {
 
     CustomButton<Raytracer>* buttonToAddPlane = new CustomButton<Raytracer>(840, 20, 70, 30, tracer);
     buttonToAddPlane->SetHandler(new FuncCaller<CustomButton<Raytracer>, CordsPair>(buttonToAddPlane, AddPlaneToTracer));
-    buttonToAddPlane->SetText("Plane", 0xfefe2200);
+    buttonToAddPlane->SetText("Plane", 0xfefe22ff);
     *addObject += buttonToAddPlane;
 
     //
@@ -106,7 +107,7 @@ int main() {
 
     CustomButton<ControlGraphics>* lowGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     lowGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(lowGraphics, LowGraphicsOnClick));
-    lowGraphics->SetText("Low", 0xfefe2200);
+    lowGraphics->SetText("Low", 0xfefe22ff);
     *graphicsButton += lowGraphics;
 
     //
@@ -115,7 +116,7 @@ int main() {
 
     CustomButton<ControlGraphics>* midGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     midGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(midGraphics, MidGraphicsOnClick));
-    midGraphics->SetText("Middle", 0xfefe2200);
+    midGraphics->SetText("Middle", 0xfefe22ff);
     *graphicsButton += midGraphics;
 
     //
@@ -124,7 +125,7 @@ int main() {
 
     CustomButton<ControlGraphics>* highGraphics = new CustomButton<ControlGraphics>(0, 0, 70, 20, &control);
     highGraphics->SetHandler(new FuncCaller<CustomButton<ControlGraphics>, CordsPair>(highGraphics, HighGraphicsOnClick));
-    highGraphics->SetText("High", 0xfefe2200);
+    highGraphics->SetText("High", 0xfefe22ff);
     *graphicsButton += highGraphics;
 
     control = {tracer, lowGraphics, midGraphics, highGraphics};
@@ -134,7 +135,7 @@ int main() {
     //
 
     DropList* colorDrop = new DropList(140, 0, 70, 30);
-    colorDrop->SetText("Color", 0xfefe2200);
+    colorDrop->SetText("Color", 0xfefe22ff);
     mainWindow += colorDrop;
 
     //
@@ -143,7 +144,7 @@ int main() {
 
     CustomButton<booba::ApplicationContext>* selectTool = new CustomButton<booba::ApplicationContext>(0, 0, 70, 20, booba::APPCONTEXT);
     selectTool->SetHandler(new FuncCaller<CustomButton<booba::ApplicationContext>, CordsPair>(selectTool, SelectColor));
-    selectTool->SetText("Select", 0xfefe2200);
+    selectTool->SetText("Select", 0xfefe22ff);
     *colorDrop += selectTool;
 
     //
@@ -151,7 +152,7 @@ int main() {
     //
 
     Button* swapButton = new Button(0, 0, 70, 20);
-    swapButton->SetText("Swap", 0xfefe2200);
+    swapButton->SetText("Swap", 0xfefe22ff);
     swapButton->SetHandler(new FuncCaller<Button, CordsPair>(swapButton, SwapColors));
     *colorDrop += swapButton;
 
@@ -162,12 +163,12 @@ int main() {
     ConstColor red   = {{0.7, 0.3, 0.3}};
     ConstColor green = {{0.8, 0.6, 0.2}};
     ConstColor blue  = {{0.8, 0.8, 0.8}};
-    ConstColor white   = {0xffffff00};
-    ConstColor lazur   = {0x0b083f00};
-    ConstColor realRed = {0xff2b2b00};
-    ConstColor realGreen = {0x13880800};
-    ConstColor realBlack = {0x161a1e00};
-    ConstColor pink      = {0xFF149300};
+    ConstColor white   = {0xffffffff};
+    ConstColor lazur   = {0x0b083fff};
+    ConstColor realRed = {0xff2b2bff};
+    ConstColor realGreen = {0x138808ff};
+    ConstColor realBlack = {0x161a1eff};
+    ConstColor pink      = {0xFF1493ff};
 
     DiffLight whiteLight = {&white};
 
@@ -300,7 +301,7 @@ void AddSphereToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
     if (!button->IsClicked(vec))
         return;
 
-    ConstColor* white      = new ConstColor(0xffffff00);
+    ConstColor* white      = new ConstColor(0xffffffff);
     Scattering* whiteScat  = new Scattering(white);
 
     button->GetContext()->AddObject(new Sphere({0, 0, 0}, 0, whiteScat));
@@ -311,7 +312,7 @@ void AddPlaneToTracer(CustomButton<Raytracer>* button, const CordsPair& vec) {
         return;
 
 
-    ConstColor* white      = new ConstColor(0xffffff00);
+    ConstColor* white      = new ConstColor(0xffffffff);
     Scattering* whiteScat  = new Scattering(white);
 
     button->GetContext()->AddObject(GetXZPlane(whiteScat, 0));
@@ -347,7 +348,7 @@ void SelectColor(CustomButton<booba::ApplicationContext>* button, const CordsPai
     popUp += hChooser;
 
     CustomButton<RealWindow>* closeButton = new CustomButton<RealWindow>(20, 430, 100, 40, &popUp);
-    closeButton->SetText("CLOSE", 0xFF000000);
+    closeButton->SetText("CLOSE", 0xFF0000ff);
     closeButton->SetHandler(new FuncCaller<CustomButton<RealWindow>, CordsPair>(closeButton, CloseWindow));
     popUp += closeButton;
 

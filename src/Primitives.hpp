@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <cstdint>
 
-#include "../Tools/src/tools.hpp"
+#include "../Plugins/src/tools.hpp"
 
 #include "Color.hpp"
 #include "CordsPair.hpp"
@@ -64,6 +64,7 @@ class Image : public booba::Image {
         }
 
         virtual void putPixel(uint32_t x, uint32_t y, uint32_t color) override {
+            // std::cout << (color & 0xFF) << std::endl;
             SetPixel(x, y, color);
         }
 
@@ -76,7 +77,11 @@ class Image : public booba::Image {
         }
 
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
-            realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_});
+            MyColor curColor = (realImage_.getPixel(width, height).r << 24u) + (realImage_.getPixel(width, height).g << 16u) + (realImage_.getPixel(width, height).b << 8u) + realImage_.getPixel(width, height).a;
+            MyColor nextColor = (color.red_ << 24u) + (color.green_ << 16u) + (color.blue_ << 8u) + color.alpha_;
+            MyColor resultColor = curColor * (1.0 - double(nextColor.alpha_) / 255.0) + nextColor * (double(nextColor.alpha_) / 255.0);
+
+            realImage_.setPixel(width, height, {resultColor.red_, resultColor.green_, resultColor.blue_});
         }
 
         MyColor GetPixel(uint32_t width, uint32_t height) {

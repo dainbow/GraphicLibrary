@@ -500,7 +500,7 @@ class TextField : public Button {
         TextField(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
         Button(x, y, width, height)
         {
-            SetText("", 0xffffff00);
+            SetText("", 0xffffffff);
 
             widgetSkin_  = SkinIdxs::InactiveText;
             clickedSkin_ = SkinIdxs::ActiveText;
@@ -557,7 +557,7 @@ class TextField : public Button {
                     tempString += '.';
                 }
 
-                SetText(tempString, 0xffffff00);
+                SetText(tempString, 0xffffffff);
                 SetChanged();
             }
         }

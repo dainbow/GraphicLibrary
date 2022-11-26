@@ -30,7 +30,7 @@ void LineTool::apply(booba::Image* image, const booba::Event* event) {
     else {
         CordsPair secondClick = curClick;
 
-        DrawBigLine(firstClick_, secondClick, lineSize_, image);
+        DrawBigLine(firstClick_, secondClick, lineSize_, image, booba::APPCONTEXT->fgColor);
 
         firstClick_ = {-1, -1};
     }
@@ -39,7 +39,7 @@ void LineTool::apply(booba::Image* image, const booba::Event* event) {
 void LineTool::buildSetupWidget() {
     booba::createLabel(20, 20, 300, 40, "Line size");
 
-    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30);
+    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30, 400, 0);
 }
 
 void BrushTool::apply(booba::Image* image, const booba::Event* event) {
@@ -47,6 +47,10 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
         if (event->type == booba::EventType::ScrollbarMoved) {
             if (event->Oleg.smedata.id == sizeScrollIdx_) {
                 brushSize_ = std::max(1, event->Oleg.smedata.value / 2);
+            }
+            else if (event->Oleg.smedata.id == transScrollIdx_) {
+                transparency_ = double(event->Oleg.smedata.value) / 50.0;
+                printf("New trans is %lg\n", transparency_);
             }
         }
 
@@ -75,10 +79,11 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
         return;
     }
 
-    CordsPair moveCords = {event->Oleg.motion.rel_x, event->Oleg.motion.rel_y};
+    CordsPair moveCords = {event->Oleg.motion.x, event->Oleg.motion.y};
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
-        LineTool::DrawBigLine(lastPoint_, moveCords, brushSize_, image);
+        // printf("Brush drawing with transparency %lx\n", booba::APPCONTEXT->fgColor & uint8_t(transparency_ * 0xFF));
+        LineTool::DrawBigLine(lastPoint_, moveCords, brushSize_, image, (booba::APPCONTEXT->fgColor & 0xffffff00) | (booba::APPCONTEXT->fgColor & uint8_t(transparency_ * 0xFF)));
     }
 
     lastPoint_ = moveCords;
@@ -86,9 +91,11 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
 }
 
 void BrushTool::buildSetupWidget() {
-    booba::createLabel(20, 20, 400, 40, "Brush size");
+    booba::createLabel(430, 10, 50, 30, "Size");
+    booba::createLabel(430, 60, 60, 30, "Trans");
 
-    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30);
+    sizeScrollIdx_  = booba::createScrollbar(20, 40, 400, 30, 400, 0);
+    transScrollIdx_ = booba::createScrollbar(20, 90, 400, 30, 50, 45);
 }
 
 void EraserTool::apply(booba::Image* image, const booba::Event* event)  {
@@ -114,11 +121,11 @@ void EraserTool::apply(booba::Image* image, const booba::Event* event)  {
         return;
     }
 
-    CordsPair moveCords = {event->Oleg.motion.rel_x, event->Oleg.motion.rel_y};
+    CordsPair moveCords = {event->Oleg.motion.x, event->Oleg.motion.y};
 
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
-        LineTool::DrawLine(image, lastPoint_, moveCords, {0xffffff00});
+        LineTool::DrawLine(image, lastPoint_, moveCords, {0xffffffff});
     }
 
     lastPoint_ = moveCords;
@@ -174,8 +181,6 @@ void BucketTool::apply(booba::Image* image, const booba::Event* event)  {
 }
 
 void booba::init_module() {
-    printf("INITIALIZING\n");
-
     LineTool* lineTool     = new LineTool();
     BrushTool* brushTool   = new BrushTool();
     EraserTool* eraserTool = new EraserTool();
@@ -183,7 +188,6 @@ void booba::init_module() {
     EllipsTool* ellipsTool = new EllipsTool();
     BucketTool* bucketTool = new BucketTool();
 
-    printf("ADD\n");
     booba::addTool(lineTool);
     booba::addTool(brushTool);
     booba::addTool(eraserTool);
