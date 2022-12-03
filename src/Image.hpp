@@ -279,7 +279,7 @@ class GradientChooser : public ImageWindow {
                 Gradienter curS(0, 100, double(GetWidth()));
 
                 for (uint32_t curColumn = 0; curColumn < GetWidth(); curColumn++, curS++) {
-                    image_.putPixel(curColumn, curRow, ConvertHSVToRGB({curH_, curS.GetValue(), curV.GetValue()}));
+                    image_.setPixel(curColumn, curRow, ConvertHSVToRGB({curH_, curS.GetValue(), curV.GetValue()}));
                 }
             }
 
@@ -323,10 +323,10 @@ class HChooser : public ImageWindow {
             for (uint32_t curRow = 0; curRow < GetHeight(); curRow++, curH++) {
                 for (uint32_t curColumn = 0; curColumn < GetWidth(); curColumn++) {
                     if (std::abs(curH.GetValue() - slave_->GetH()) >= 1.0) {
-                        image_.putPixel(curColumn, curRow, ConvertHSVToRGB({curH.GetValue(), 100.0, 100.0}));
+                        image_.setPixel(curColumn, curRow, ConvertHSVToRGB({curH.GetValue(), 100.0, 100.0}));
                     }
                     else {
-                        image_.putPixel(curColumn, curRow, 0);
+                        image_.setPixel(curColumn, curRow, 0);
                     }
                 }
             }
@@ -367,7 +367,7 @@ class ColorWatcher : public ImageWindow {
         virtual void ReDraw() override {
             for (uint32_t curRow = 0; curRow < GetHeight(); curRow++) {
                 for (uint32_t curColumn = 0; curColumn < GetWidth(); curColumn++) {
-                    image_.putPixel(curColumn, curRow, lastColor_);
+                    image_.setPixel(curColumn, curRow, lastColor_);
                 }
             }
 

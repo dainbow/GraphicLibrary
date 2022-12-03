@@ -63,6 +63,10 @@ class Window : public Widget {
             manager_.TriggetKeyPressed(curEvent);
         }
 
+        virtual void OnKeyboardRelease(const Event& curEvent) override {
+            manager_.TriggerKeyboardRelease(curEvent);
+        }
+
         virtual void operator+=(Widget* newWidget) {
             newWidget->SetParent(this);
 
@@ -210,6 +214,10 @@ class RealWindow : public Window {
                     // lastKeyPressedTime_ = GetTimeMiliseconds();
                     break;
                 }
+                
+                case EventType::KeyReleased: {
+
+                }
 
                 case EventType::NoEvent:
                 case EventType::ButtonClicked:
@@ -217,6 +225,8 @@ class RealWindow : public Window {
                 case EventType::CanvasMPressed:
                 case EventType::CanvasMReleased:
                 case EventType::CanvasMMoved:
+                case EventType::CanvasMLeft:
+                case EventType::TimerEvent:
                 default:
                     break;
             }

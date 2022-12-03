@@ -81,10 +81,10 @@ class LineTool : public AbstractTool {
         virtual void apply(booba::Image* image, const booba::Event* event) override;
 
         static void DrawBigLine(const CordsPair& start, const CordsPair& end, int32_t radius, booba::Image* image, const uint32_t color) {
-            for (int32_t curX = std::max(0, start.x - radius); curX < std::min(int32_t(image->getX()), start.x + radius); curX++) {
+            for (int32_t curX = std::max(0, start.x - radius); curX < std::min(int32_t(image->getW()), start.x + radius); curX++) {
                 for (int32_t curY = std::max(0, start.y - radius); curY < std::min(int32_t(image->getH()), start.y + radius); curY++) {
                     if ((std::pow(curX - start.x, 2) + std::pow(curY - start.y, 2)) <= std::pow(radius, 2)) {
-                        if (((end.x + curX - start.x) >= 0) && ((end.x + curX - start.x) < int32_t(image->getX())) &&
+                        if (((end.x + curX - start.x) >= 0) && ((end.x + curX - start.x) < int32_t(image->getW())) &&
                             ((end.y + curY - start.y) >= 0) && ((end.y + curY - start .y) < int32_t(image->getH()))) {
                             DrawLine(image, {curX, curY}, {end.x + curX - start.x, end.y + curY - start.y}, color);
                         }
@@ -115,10 +115,10 @@ class LineTool : public AbstractTool {
             int32_t curY = first.y;
             for (int32_t curX = first.x; curX < second.x; curX++) {
                 if (trans) {
-                    curImage->putPixel(curY, curX, lineColor);
+                    curImage->setPixel(curY, curX, lineColor);
                 }
                 else {
-                    curImage->putPixel(curX, curY, lineColor);
+                    curImage->setPixel(curX, curY, lineColor);
                 }
                 
                 error += dError;
@@ -236,10 +236,10 @@ class EllipsTool : public AbstractTool {
             float dY = float(2 * xRadius * xRadius * y);
 
             while (dX < dY) {
-                curImage->putPixel( x + xCenter,  y + yCenter, lineColor);
-                curImage->putPixel(-x + xCenter,  y + yCenter, lineColor);
-                curImage->putPixel( x + xCenter, -y + yCenter, lineColor);
-                curImage->putPixel(-x + xCenter, -y + yCenter, lineColor);
+                curImage->setPixel( x + xCenter,  y + yCenter, lineColor);
+                curImage->setPixel(-x + xCenter,  y + yCenter, lineColor);
+                curImage->setPixel( x + xCenter, -y + yCenter, lineColor);
+                curImage->setPixel(-x + xCenter, -y + yCenter, lineColor);
 
                 if (d1 < 0) {
                     x++;
@@ -262,10 +262,10 @@ class EllipsTool : public AbstractTool {
                         float(xRadius * xRadius * yRadius * yRadius);
             
             while (y >= 0) {
-                curImage->putPixel( x + xCenter,  y + yCenter, lineColor);
-                curImage->putPixel(-x + xCenter,  y + yCenter, lineColor);
-                curImage->putPixel( x + xCenter, -y + yCenter, lineColor);
-                curImage->putPixel(-x + xCenter, -y + yCenter, lineColor);
+                curImage->setPixel( x + xCenter,  y + yCenter, lineColor);
+                curImage->setPixel(-x + xCenter,  y + yCenter, lineColor);
+                curImage->setPixel( x + xCenter, -y + yCenter, lineColor);
+                curImage->setPixel(-x + xCenter, -y + yCenter, lineColor);
 
                 if (d2 > 0) {
                     y--;
@@ -327,12 +327,12 @@ class BucketTool : public AbstractTool {
                 int32_t leftX = curPoint.x;
 
                 while ((leftX - 1) && (curImage->getPixel(leftX - 1, curPoint.y) == colorToErase)) {
-                    curImage->putPixel(leftX - 1, curPoint.y, fillColor);
+                    curImage->setPixel(leftX - 1, curPoint.y, fillColor);
                     leftX--;
                 }
 
-                while ((curPoint.x < int32_t(curImage->getX())) && (curImage->getPixel(curPoint.x, curPoint.y) == colorToErase)) {
-                    curImage->putPixel(curPoint.x, curPoint.y, fillColor);
+                while ((curPoint.x < int32_t(curImage->getW())) && (curImage->getPixel(curPoint.x, curPoint.y) == colorToErase)) {
+                    curImage->setPixel(curPoint.x, curPoint.y, fillColor);
 
                     curPoint.x++;
                 }

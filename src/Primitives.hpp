@@ -45,13 +45,13 @@ class Image : public booba::Image {
 
         float rotation_ = 0;
 
-        ~Image() = default;
+        virtual ~Image() = default;
 
-        virtual uint32_t getH() override {
+        virtual size_t getH() override {
             return height_;
         }
 
-        virtual uint32_t getX() override {
+        virtual size_t getW() override {
             return width_;
         }
 
@@ -59,21 +59,13 @@ class Image : public booba::Image {
             realImage_.copy(copy.realImage_, x, y);
         }
 
-        virtual uint32_t getPixel(int32_t x, int32_t y) override {
-            return GetPixel(x, y);
+        virtual uint32_t getPixel(size_t x, size_t y) override {
+            return GetPixel(uint32_t(x), uint32_t(y));
         }
 
-        virtual void putPixel(uint32_t x, uint32_t y, uint32_t color) override {
+        virtual void setPixel(size_t x, size_t y, uint32_t color) override {
             // std::cout << (color & 0xFF) << std::endl;
-            SetPixel(x, y, color);
-        }
-
-        virtual uint32_t& operator()(uint32_t, uint32_t) override {
-            return width_;
-        }
-
-        virtual const uint32_t& operator()(uint32_t, uint32_t) const override {
-            return height_;
+            SetPixel(uint32_t(x), uint32_t(y), color);
         }
 
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
@@ -85,7 +77,7 @@ class Image : public booba::Image {
         }
 
         MyColor GetPixel(uint32_t width, uint32_t height) {
-            return MyColor((uint32_t(realImage_.getPixel(width, height).r) << 24) + (uint32_t(realImage_.getPixel(width, height).g) << 16) + (uint32_t(realImage_.getPixel(width, height).b) << 8));
+            return MyColor((uint32_t(realImage_.getPixel(width, height).r) << 24) + (uint32_t(realImage_.getPixel(width, height).g) << 16) + (uint32_t(realImage_.getPixel(width, height).b) << 8) + 0xff);
         }
 
         bool LoadFromFile(const sf::String& imageName) {
@@ -113,10 +105,10 @@ class Image : public booba::Image {
             realImage_.create(width, height, {color.red_, color.green_, color.blue_});
         }
 
-        void Clear() {
+        void Clear(const MyColor& color = 0) {
             for (uint32_t curX = 0; curX < width_; curX++) {
                 for (uint32_t curY = 0; curY < height_; curY++) {
-                    realImage_.setPixel(curX, curY, {0, 0, 0});
+                    realImage_.setPixel(curX, curY, {color.red_, color.green_, color.blue_});
                 }
             }
         }

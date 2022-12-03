@@ -1,5 +1,11 @@
 #include "DainTools.hpp" 
 
+booba::GUID booba::getGUID() {
+    booba::GUID dainToolsGUID = {"DAIN-TOOLS"};
+    
+    return dainToolsGUID;
+}
+
 int64_t GetTimeMiliseconds() {
     auto curTime = std::chrono::system_clock::now();
     auto sinceEpoch = curTime.time_since_epoch();
@@ -10,9 +16,9 @@ int64_t GetTimeMiliseconds() {
 
 void LineTool::apply(booba::Image* image, const booba::Event* event) {
     if (image == nullptr) {
-        if (event->type == booba::EventType::ScrollbarMoved) {
+        if (event->type == booba::EventType::SliderMoved) {
             if (event->Oleg.smedata.id == sizeScrollIdx_) {
-                lineSize_ = std::max(1, event->Oleg.smedata.value / 2);
+                lineSize_ = std::max(1l, event->Oleg.smedata.value / 2);
             }
         }
 
@@ -22,7 +28,7 @@ void LineTool::apply(booba::Image* image, const booba::Event* event) {
     if (event->type != booba::EventType::MousePressed)
         return;
 
-    CordsPair curClick = {event->Oleg.mbedata.x, event->Oleg.mbedata.y};
+    CordsPair curClick = {int32_t(event->Oleg.mbedata.x), int32_t(event->Oleg.mbedata.y)};
 
     if ((firstClick_.x == -1) && (firstClick_.y == -1)) {
         firstClick_ = curClick;
@@ -39,14 +45,14 @@ void LineTool::apply(booba::Image* image, const booba::Event* event) {
 void LineTool::buildSetupWidget() {
     booba::createLabel(20, 20, 300, 40, "Line size");
 
-    sizeScrollIdx_ = booba::createScrollbar(20, 120, 400, 30, 400, 0);
+    sizeScrollIdx_ = booba::createSlider(20, 120, 400, 30, 0, 400, 0);
 }
 
 void BrushTool::apply(booba::Image* image, const booba::Event* event) {
     if (image == nullptr) {
-        if (event->type == booba::EventType::ScrollbarMoved) {
+        if (event->type == booba::EventType::SliderMoved) {
             if (event->Oleg.smedata.id == sizeScrollIdx_) {
-                brushSize_ = std::max(1, event->Oleg.smedata.value / 2);
+                brushSize_ = std::max(1l, event->Oleg.smedata.value / 2);
             }
             else if (event->Oleg.smedata.id == transScrollIdx_) {
                 transparency_ = double(event->Oleg.smedata.value) / 50.0;
@@ -79,7 +85,7 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
         return;
     }
 
-    CordsPair moveCords = {event->Oleg.motion.x, event->Oleg.motion.y};
+    CordsPair moveCords = {int32_t(event->Oleg.motion.x), int32_t(event->Oleg.motion.y)};
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
         // printf("Brush drawing with transparency %lx\n", booba::APPCONTEXT->fgColor & uint8_t(transparency_ * 0xFF));
@@ -94,8 +100,8 @@ void BrushTool::buildSetupWidget() {
     booba::createLabel(430, 10, 50, 30, "Size");
     booba::createLabel(430, 60, 60, 30, "Trans");
 
-    sizeScrollIdx_  = booba::createScrollbar(20, 40, 400, 30, 400, 0);
-    transScrollIdx_ = booba::createScrollbar(20, 90, 400, 30, 50, 45);
+    sizeScrollIdx_  = booba::createSlider(20, 40, 400, 30, 0, 400, 0);
+    transScrollIdx_ = booba::createSlider(20, 90, 400, 30, 0, 50, 45);
 }
 
 void EraserTool::apply(booba::Image* image, const booba::Event* event)  {
@@ -121,7 +127,7 @@ void EraserTool::apply(booba::Image* image, const booba::Event* event)  {
         return;
     }
 
-    CordsPair moveCords = {event->Oleg.motion.x, event->Oleg.motion.y};
+    CordsPair moveCords = {int32_t(event->Oleg.motion.x), int32_t(event->Oleg.motion.y)};
 
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
@@ -136,7 +142,7 @@ void RectTool::apply(booba::Image* image, const booba::Event* event)  {
     if (event->type != booba::EventType::MousePressed)
         return;
 
-    CordsPair curClick = {event->Oleg.mbedata.x, event->Oleg.mbedata.y};
+    CordsPair curClick = {int32_t(event->Oleg.mbedata.x), int32_t(event->Oleg.mbedata.y)};
 
     if ((firstClick_.x == -1) && (firstClick_.y == -1)) {
         firstClick_ = curClick;
@@ -157,7 +163,7 @@ void EllipsTool::apply(booba::Image* image, const booba::Event* event)  {
     if (event->type != booba::EventType::MousePressed)
         return;
 
-    CordsPair curClick = {event->Oleg.mbedata.x, event->Oleg.mbedata.y};
+    CordsPair curClick = {int32_t(event->Oleg.mbedata.x), int32_t(event->Oleg.mbedata.y)};
 
     if ((firstClick_.x == -1) && (firstClick_.y == -1)) {
         firstClick_ = curClick;
@@ -175,7 +181,7 @@ void BucketTool::apply(booba::Image* image, const booba::Event* event)  {
     if (event->type != booba::EventType::MousePressed)
         return;
 
-    CordsPair curClick = {event->Oleg.mbedata.x, event->Oleg.mbedata.y};
+    CordsPair curClick = {int32_t(event->Oleg.mbedata.x), int32_t(event->Oleg.mbedata.y)};
 
     Fill(image, curClick, booba::APPCONTEXT->fgColor);
 }

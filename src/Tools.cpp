@@ -12,6 +12,7 @@ void booba::addFilter(booba::Tool* tool) {
 
 ToolManager::ToolManager() :
 activeTool_(nullptr),
+plugins_(),
 tools_(),
 textures_(),
 curInitTool_(0), toolWindows_()
@@ -40,7 +41,7 @@ void ToolPalette::SetTool(ToolButton* newTool) {
     curActive_ = newTool;   
 }
 
-uint64_t booba::createButton(int32_t x, int32_t y, uint32_t w, uint32_t h, const char* text) {
+uint64_t booba::createButton(size_t x, size_t y, size_t w, size_t h, const char* text) {
     ButtonForTool* newButton = new ButtonForTool(x, y, w, h);
     if (text) {
         newButton->SetText(text, 0xffffffff);
@@ -51,8 +52,8 @@ uint64_t booba::createButton(int32_t x, int32_t y, uint32_t w, uint32_t h, const
     return reinterpret_cast<uint64_t>(newButton);
 }
 
-uint64_t booba::createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h, int32_t maxValue, int32_t startValue) {
-    ScrollBarForTool* newScroll = new ScrollBarForTool(x, y, h, w, double(maxValue), double(startValue));
+uint64_t booba::createSlider(size_t x, size_t y, size_t w, size_t h, int64_t minValue, int64_t maxValue, int64_t startValue) {
+    ScrollBarForTool* newScroll = new ScrollBarForTool(x, y, h, w, double(minValue), double(maxValue), double(startValue));
     newScroll->SetRotation(-float(M_PI_2));
 
     *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newScroll;
@@ -60,8 +61,8 @@ uint64_t booba::createScrollbar(int32_t x, int32_t y, uint32_t w, uint32_t h, in
     return reinterpret_cast<uint64_t>(newScroll);
 }
 
-uint64_t booba::createLabel(int32_t x, int32_t y, uint32_t w, uint32_t h, const char* text) {
-    CustomButton<int32_t>* newLabel = new CustomButton<int32_t>(x, y, w, h, nullptr);
+uint64_t booba::createLabel(size_t x, size_t y, size_t w, size_t h, const char* text) {
+    CustomButton<int32_t>* newLabel = new CustomButton<int32_t>(uint32_t(x), uint32_t(y), uint32_t(w), uint32_t(h), nullptr);
     if (text) {
         newLabel->SetText(text, 0xffffffff);
     }
@@ -71,16 +72,14 @@ uint64_t booba::createLabel(int32_t x, int32_t y, uint32_t w, uint32_t h, const 
     return reinterpret_cast<uint64_t>(newLabel);
 }
 
-uint64_t booba::putPixel(uint64_t canvas, int32_t x, int32_t y, uint32_t color) {
+void booba::putPixel(uint64_t canvas, size_t x, size_t y, uint32_t color) {
     CanvasForTool* curCanvas = reinterpret_cast<CanvasForTool*>(canvas);
 
-    curCanvas->image_.SetPixel(x, y, color);
+    curCanvas->image_.setPixel(x, y, color);
     curCanvas->SetChanged();
-
-    return canvas;
 }
 
-uint64_t booba::createCanvas(int32_t x, int32_t y, int32_t w, int32_t h) {
+uint64_t booba::createCanvas(size_t x, size_t y, size_t w, size_t h) {
     CanvasForTool* newCanvas = new CanvasForTool(x, y, w, h);
 
     *ToolManager::GetInstance().GetToolWindow(ToolManager::GetInstance().GetCurInitTool()) += newCanvas;
@@ -88,15 +87,30 @@ uint64_t booba::createCanvas(int32_t x, int32_t y, int32_t w, int32_t h) {
     return reinterpret_cast<uint64_t>(newCanvas);
 }
 
-uint64_t booba::putSprite(uint64_t canvas, int32_t x, int32_t y, uint32_t w, uint32_t h, const char* texture) {
+void booba::putSprite(uint64_t canvas, size_t x, size_t y, size_t w, size_t h, const char* texture) {
     assert(texture);
     
     CanvasForTool* curCanvas = reinterpret_cast<CanvasForTool*>(canvas);
 
-    ::Image imageToCopy(w, h);
+    ::Image imageToCopy{uint32_t(w), uint32_t(h)};
     imageToCopy.LoadFromFile(texture);
 
-    curCanvas->image_.Copy(imageToCopy, x, y);
-
-    return canvas;
+    curCanvas->image_.Copy(imageToCopy, uint32_t(x), uint32_t(y));
 }
+
+void booba::cleanCanvas(uint64_t canvasId, uint32_t color) {
+    CanvasForTool* curCanvas = reinterpret_cast<CanvasForTool*>(canvasId);
+
+    curCanvas->image_.Clear(color);
+}
+
+void* booba::getLibSymbol(GUID guid, const char* name) {
+    void* handler = nullptr;
+
+    if ((handler = ToolManager::GetInstance().GetGUIDHandler(guid)) == nullptr) {
+        return nullptr;
+    }
+
+    return dlsym(handler, name);
+}
+

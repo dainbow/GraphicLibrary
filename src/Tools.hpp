@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "../Plugins/src/tools.hpp"
 
 #include "SkinManager.hpp"
@@ -12,11 +14,35 @@ class Canvas;
 
 class ToolButton;
 
+template<>
+struct std::hash<booba::GUID> {
+    std::size_t operator()(const booba::GUID& g) const {
+        std::string str(g.str);
+        std::hash<std::string> hashsa;
+
+        return hashsa(str);
+    }
+};
+
+template <>
+struct std::equal_to<booba::GUID> {
+    constexpr bool operator()( const booba::GUID& lhs, const booba::GUID& rhs ) const {
+        for (uint32_t curIdx = 0; curIdx < sizeof(lhs.str); curIdx++) {
+            if (rhs.str[curIdx] != lhs.str[curIdx]) {
+                return 0;
+            }
+        }
+
+        return 1;
+    }
+};
+
 class ToolManager {
     private:
         static ToolManager* instance_;
         booba::Tool* activeTool_;
 
+        std::unordered_map<booba::GUID, void*> plugins_;
         std::vector<booba::Tool*> tools_;
         std::vector<sf::Texture*> textures_; 
 
@@ -33,7 +59,6 @@ class ToolManager {
                 instance_ = new ToolManager();
             }
 
-            std::cout << "RETURNING INSTANCE\n";
             return *instance_;
         }
 
@@ -88,6 +113,23 @@ class ToolManager {
 
         sf::Texture* GetToolTexture(const uint64_t toolIdx) {
             return textures_[toolIdx];
+        }
+
+        void AddGUID(const booba::GUID& guid, void* handler) {
+            if (plugins_.find(guid) == plugins_.end()) {
+                plugins_[guid] = handler;
+            }
+            else {
+                assert(false && "PLUGIN'S GUID ISN'T UNIQUE");
+            }
+        }
+
+        void* GetGUIDHandler(const booba::GUID& guid) {
+            if (plugins_.find(guid) != plugins_.end()) {
+                return plugins_[guid];
+            }
+           
+            return nullptr;
         }
 };
 
@@ -146,12 +188,20 @@ class ToolWindow : public RealWindow {
                     break;
                 }
 
+                case EventType::KeyReleased: {
+                    OnKeyboardRelease(myEvent);
+
+                    break;
+                }
+
                 case EventType::NoEvent:
                 case EventType::ButtonClicked:
                 case EventType::ScrollbarMoved:
                 case EventType::CanvasMPressed:
                 case EventType::CanvasMReleased:
                 case EventType::CanvasMMoved:
+                case EventType::CanvasMLeft:
+                case EventType::TimerEvent:
                 default:
                     break;
             }
@@ -174,8 +224,8 @@ class ButtonForTool : public Button {
         booba::Tool* bindedTool_;
 
     public:
-        ButtonForTool(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
-        Button(x, y, width, height),
+        ButtonForTool(size_t x, size_t y, size_t width, size_t height) :
+        Button(uint32_t(x), uint32_t(y), uint32_t(width), uint32_t(height)),
         bindedTool_(ToolManager::GetInstance().GetTool(ToolManager::GetInstance().GetCurInitTool())) 
         {}
 
@@ -210,10 +260,10 @@ class ScrollBarForTool : public ScrollBar {
 
         double curValue_;
     public:
-        ScrollBarForTool(uint32_t x, uint32_t y, uint32_t width, uint32_t height, double maxValue, double startValue) :
-        ScrollBar(x, y, width, height, &curValue_, &minValue_, &maxValue_),
+        ScrollBarForTool(size_t x, size_t y, size_t width, size_t height, double minValue, double maxValue, double startValue) :
+        ScrollBar(uint32_t(x), uint32_t(y), uint32_t(width), uint32_t(height), &curValue_, &minValue_, &maxValue_),
         bindedTool_(ToolManager::GetInstance().GetTool(ToolManager::GetInstance().GetCurInitTool())),
-        minValue_(0), maxValue_(maxValue), curValue_(startValue)
+        minValue_(minValue), maxValue_(maxValue), curValue_(startValue)
         {}
 
         ScrollBarForTool(const ScrollBarForTool& otherScroll)            = delete;
@@ -222,7 +272,7 @@ class ScrollBarForTool : public ScrollBar {
         booba::Event ScrollMoveEvent() {
             booba::Event newEvent;
 
-            newEvent.type = booba::EventType::ScrollbarMoved;
+            newEvent.type = booba::EventType::SliderMoved;
 
             newEvent.Oleg.smedata.id = reinterpret_cast<uint64_t>(this);
             newEvent.Oleg.smedata.value = static_cast<int32_t>(curValue_);
@@ -244,8 +294,8 @@ class CanvasForTool : public ImageWindow {
     private:
         booba::Tool* bindedTool_;
     public:
-        CanvasForTool(uint32_t x, uint32_t y, uint32_t width, uint32_t height) :
-        ImageWindow(x, y, width, height),
+        CanvasForTool(size_t x, size_t y, size_t width, size_t height) :
+        ImageWindow(uint32_t(x), uint32_t(y), uint32_t(width), uint32_t(height)),
         bindedTool_(ToolManager::GetInstance().GetTool(ToolManager::GetInstance().GetCurInitTool()))
         {}
         
@@ -279,6 +329,13 @@ class CanvasForTool : public ImageWindow {
 
             if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
                 booba::Event stEvent = CanvasEvent(curEvent);
+                bindedTool_->apply(nullptr, &stEvent);
+            }
+            else {
+                booba::Event stEvent;
+                stEvent.type = booba::EventType::CanvasMLeft;
+                stEvent.Oleg.cedata.id = reinterpret_cast<uint64_t>(this);
+
                 bindedTool_->apply(nullptr, &stEvent);
             }
         }
@@ -328,6 +385,21 @@ class CanvasForTool : public ImageWindow {
     class Canvas : public FlexImageWindow {
         private:
             uint32_t curToolIdx_;
+
+            bool isShift_;
+            bool isCtrl_;
+            bool isAlt_;
+
+            void ProcessKey(const Event& stEvent) {
+                isShift_ = stEvent.Oleg_.kpedata.shift;
+                isCtrl_  = stEvent.Oleg_.kpedata.ctrl;
+                isAlt_   = stEvent.Oleg_.kpedata.alt;
+            }
+
+            void ReleaseKeys() {
+                isShift_ = isCtrl_ = isAlt_ = 0;
+            }
+
         public:
             ToolManager& toolManager_;
             ToolPalette* toolPalette_;
@@ -336,6 +408,7 @@ class CanvasForTool : public ImageWindow {
             Canvas(uint32_t x, uint32_t y, uint32_t width, uint32_t height, ToolPalette* palette) :
             FlexImageWindow(x, y, width, height),
             curToolIdx_(0),
+            isShift_(0), isCtrl_(0), isAlt_(0),
             toolManager_(ToolManager::GetInstance()),
             toolPalette_(palette),
             toolWindow_(new ToolWindow())
@@ -350,18 +423,22 @@ class CanvasForTool : public ImageWindow {
                     }
 
                     void* dlHandler = dlopen(curFile.path().c_str(), RTLD_LAZY);
-                    
+
                     if (dlHandler) {
                         void (*initFunc)()   = nullptr; 
                         *((void**)&initFunc) = dlsym(dlHandler, "init_module");
 
+                        booba::GUID (*guidFunc)()   = nullptr;
+                        *((void**)&guidFunc) = dlsym(dlHandler, "getGUID");
+
                         (*initFunc)();
+                        toolManager_.AddGUID(guidFunc(), dlHandler);
                     }
                     else {
                         fprintf(stderr, "Unable to open lib: %s\n", dlerror());
                     }
                 }
-                std::cout << "TOOLS AMOUNT IS " << toolManager_.GetToolSize() << std::endl;
+                
                 toolPalette_->AddTools(this, &toolManager_, toolManager_.GetToolSize());
             }
 
@@ -373,8 +450,7 @@ class CanvasForTool : public ImageWindow {
 
                 if (event.type_ == EventType::MousePressed) {
                     CordsPair convertedCords = ConvertRealXY({event.Oleg_.mbedata.x, event.Oleg_.mbedata.y});
-                    std::cout << convertedCords.x << " " << convertedCords.y << std::endl;
-
+                    
                     standartEvent.Oleg_.mbedata.x = convertedCords.x;
                     standartEvent.Oleg_.mbedata.y = convertedCords.y;
 
@@ -394,12 +470,27 @@ class CanvasForTool : public ImageWindow {
                 return *reinterpret_cast<booba::Event*>(&standartEvent);
             }
 
+            virtual void OnTick(const Event& curEvent) override {
+                ProcessRedraw();
+                manager_.TriggerTick(curEvent);
+
+                booba::Event stEvent;
+                stEvent.type = booba::EventType::TimerEvent;
+                stEvent.Oleg.tedata.time = GetTimeMiliseconds();
+
+                toolManager_.ApplyActive(nullptr, &stEvent);
+                SetChanged();
+
+                PlaceTexture();
+            }
+
             virtual void OnClick(const Event& curEvent) override {
                 Window::OnClick(curEvent);
 
                 if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
 
+                    stEvent.Oleg.mbedata.ctrl = 1;
                     toolManager_.ApplyActive(&image_, &stEvent);
                     SetChanged();
                 }
@@ -408,9 +499,17 @@ class CanvasForTool : public ImageWindow {
             virtual void OnMove(const Event& curEvent) override {
                 Window::OnMove(curEvent);
 
-                if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
+                if (IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
                     
+                    toolManager_.ApplyActive(&image_, &stEvent);
+                    SetChanged();
+                }
+                else {
+                    booba::Event stEvent;
+                    stEvent.type = booba::EventType::CanvasMLeft;
+                    stEvent.Oleg.cedata.id = 0;
+
                     toolManager_.ApplyActive(&image_, &stEvent);
                     SetChanged();
                 }
@@ -422,6 +521,18 @@ class CanvasForTool : public ImageWindow {
                 booba::Event stEvent = ConvertToStandartEvent(curEvent);
                 toolManager_.ApplyActive(&image_, &stEvent);
                 SetChanged();
+            }
+
+            virtual void OnKeyboard(const Event& curEvent) override {
+                Window::OnKeyboard(curEvent);
+
+                ProcessKey(curEvent);
+            }
+
+            virtual void OnKeyboardRelease(const Event& curEvent) override {
+                Window::OnKeyboardRelease(curEvent);
+
+                ReleaseKeys();
             }
 
             ~Canvas() {}

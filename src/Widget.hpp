@@ -131,6 +131,10 @@ class Widget {
 
         }
 
+        virtual void OnKeyboardRelease([[maybe_unused]] const Event& curEvent) {
+
+        }
+
         SkinIdxs GetSkin() {
             return widgetSkin_;
         }
@@ -317,6 +321,12 @@ class ChildrenManager {
         void TriggetKeyPressed(const Event& curEvent) {
             for (auto& curWidget : widgets_) {
                 curWidget->OnKeyboard(curEvent);
+            }
+        }
+
+        void TriggerKeyboardRelease(const Event& curEvent) {
+            for (auto& curWidget : widgets_) {
+                curWidget->OnKeyboardRelease(curEvent);
             }
         }
 };

@@ -11,7 +11,7 @@
 
 #include "../tools.hpp"
 
-const std::string soPath        = "./Icons/dain/";
+const std::string soPath        = "./Icons/";
 
 const std::string CurvesTexture = soPath + "Curves.png";
 

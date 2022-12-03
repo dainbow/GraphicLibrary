@@ -1,5 +1,11 @@
 #include "DainCurves.hpp"
 
+booba::GUID booba::getGUID() {
+    booba::GUID dainToolsGUID = {"DAIN-CURVES"};
+    
+    return dainToolsGUID;
+}
+
 HSV ConvertRGBToHSV(const uint32_t rgb) {
     double r = ((rgb & (0xFF << 24u)) >> 24u) / 255.0;
     double g = ((rgb & (0xFF << 16u)) >> 16u) / 255.0;
@@ -179,7 +185,7 @@ void CurvesTool::ReDraw() {
 
 void CurvesTool::DrawGradients() {
     for (uint64_t curY = 0; curY < (CanvasHeight + 1); curY++) {
-        uint32_t curColor = ConvertHSVToRGB({0, 0, 100.0 - (double(curY) / double(CanvasHeight + 1) * 100.0)});
+        uint32_t curColor = ConvertHSVToRGB({360.0 - (double(curY) / double(CanvasHeight + 1) * 360.0), 100.0, 100.0});
 
         for (uint64_t curX = 0; curX < 30; curX++) {
             booba::putPixel(verticalGradCanvas_, curX, curY, curColor);
@@ -187,7 +193,7 @@ void CurvesTool::DrawGradients() {
     }
 
     for (uint64_t curX = 0; curX < (CanvasWidth + 1); curX++) {
-        uint32_t curColor = ConvertHSVToRGB({0, 0, double(curX) / double(CanvasWidth + 1) * 100.0});
+        uint32_t curColor = ConvertHSVToRGB({double(curX) / double(CanvasWidth + 1) * 360.0, 100.0, 100.0});
 
         for (uint64_t curY = 0; curY < 30; curY++) {
             booba::putPixel(horisontalGradCanvas_, curX, curY, curColor);
@@ -196,7 +202,7 @@ void CurvesTool::DrawGradients() {
 }
 
 double CurvesTool::ConvertV(const double V) {
-    const double convertedV = (V / 100.0) * double(CanvasWidth);
+    const double convertedV = (V / 360.0) * double(CanvasWidth);
 
     uint32_t left  = 0;
     uint32_t right = interPoints_.size();
@@ -217,7 +223,7 @@ double CurvesTool::ConvertV(const double V) {
         }
     } 
 
-    return ((double(CanvasHeight) - interPoints_[left].y) / double(CanvasHeight)) * 100.0;
+    return ((double(CanvasHeight) - interPoints_[left].y) / double(CanvasHeight)) * 360.0;
 }
 
 void CurvesTool::apply(booba::Image* image, const booba::Event* event) {
@@ -230,7 +236,6 @@ void CurvesTool::apply(booba::Image* image, const booba::Event* event) {
             }
         }
         else if (event->type == booba::EventType::ButtonClicked) {
-            std::cout << "HERE";
             if (event->Oleg.bcedata.id == resetButtonIdx_) {
                 ResetBasePoints();
 
@@ -242,11 +247,11 @@ void CurvesTool::apply(booba::Image* image, const booba::Event* event) {
     }
 
     if (event->type == booba::EventType::MousePressed) {
-        for (uint64_t curX = 0; curX < image->getX(); curX++) {
-            for (uint64_t curY = 0; curY < image->getH(); curY++) {
+        for (size_t curX = 0; curX < image->getW(); curX++) {
+            for (size_t curY = 0; curY < image->getH(); curY++) {
                 HSV curHsv = ConvertRGBToHSV(image->getPixel(curX, curY));
 
-                image->putPixel(curX, curY, ConvertHSVToRGB({curHsv.H, curHsv.S, ConvertV(curHsv.V)}));
+                image->setPixel(curX, curY, ConvertHSVToRGB({ConvertV(curHsv.H), curHsv.S, curHsv.V}));
             }
         }
     }

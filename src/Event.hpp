@@ -16,8 +16,12 @@ enum class EventType {
     CanvasMPressed  = 6,
     CanvasMReleased = 7,
     CanvasMMoved    = 8,
+    CanvasMLeft     = 9, // Mouse left canvas.
+
+    TimerEvent      = 10, // Timer event. Data structure - TimerEventData.
 
     KeyPressed,
+    KeyReleased,
     Closed,
 };
 
@@ -29,13 +33,13 @@ enum class MouseButton
 
 struct MotionEventData
 {
-    int32_t x, y;
-    int32_t rel_x, rel_y;
+    size_t x, y;
+    int64_t rel_x, rel_y;
 };
 
 struct MouseButtonEventData
 {
-    int32_t x, y;
+    size_t x, y;
     MouseButton button; 
     bool shift, alt, ctrl;
 };
@@ -159,16 +163,24 @@ struct ButtonClickedEventData
     uint64_t id; 
 };
 
-struct ScrollMovedEventData
+struct SliderMovedEventData
 {
     uint64_t id; 
-    int32_t value;
+    int64_t value;
 };
 
 struct CanvasEventData
 {
     uint64_t id;
-    int32_t x, y; 
+    size_t x, y; 
+};
+
+struct TimerEventData
+{
+    /**
+     * @brief time in ms counting from the start of thr program.
+     */
+    uint64_t time;
 };
 
 class Event {
@@ -180,9 +192,10 @@ class Event {
         MotionEventData motion;
         MouseButtonEventData mbedata;
         ButtonClickedEventData bcedata;
-        ScrollMovedEventData smedata;
+        SliderMovedEventData smedata;
         CanvasEventData cedata;
         KeyPressedEventData kpedata;
+        TimerEventData tedata;
     } Oleg_; //Object loading event group.
 
     explicit Event(const sf::Event& sfEvent) :
@@ -244,12 +257,17 @@ class Event {
                 break;
             }
 
+            case sf::Event::KeyReleased: {
+                type_ = EventType::KeyReleased;
+
+                break;
+            }
+
             case sf::Event::Count:
             case sf::Event::Resized:
             case sf::Event::LostFocus:
             case sf::Event::GainedFocus:
             case sf::Event::TextEntered:
-            case sf::Event::KeyReleased:
             case sf::Event::MouseWheelMoved:
             case sf::Event::MouseWheelScrolled:
             case sf::Event::MouseEntered:

@@ -12,14 +12,14 @@ DEPENDENCES = $(addsuffix .d,$(OBJECTS))
 
 EXECUTABLE = Graph.out
 
-$(EXECUTABLE): $(OBJECTS) ./Plugins/dain.so ./Plugins/curves.so
+$(EXECUTABLE): $(OBJECTS) ./Plugins/curves.aboba.so ./Plugins/dain.aboba.so
 	@$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-./Plugins/curves.so: ./Plugins/src/DainCurves/DainCurves.cpp ./Plugins/src/DainCurves/DainCurves.hpp ./Plugins/src/tools.hpp
-	@$(CC) -shared -Wall -Wextra -o ./Plugins/curves.so -fPIC ./Plugins/src/DainCurves/DainCurves.cpp
+./Plugins/curves.aboba.so: ./Plugins/src/DainCurves/DainCurves.cpp ./Plugins/src/DainCurves/DainCurves.hpp ./Plugins/src/tools.hpp
+	@$(CC) -shared -Wall -Wextra -o $@ -fPIC $<
 
-./Plugins/dain.so: ./Plugins/src/DainTools/DainTools.cpp ./Plugins/src/DainTools/DainTools.hpp ./Plugins/src/tools.hpp
-	@$(CC) -shared -Wall -Wextra -o ./Plugins/dain.so -fPIC ./Plugins/src/DainTools/DainTools.cpp
+./Plugins/dain.aboba.so: ./Plugins/src/DainTools/DainTools.cpp ./Plugins/src/DainTools/DainTools.hpp ./Plugins/src/tools.hpp
+	@$(CC) -shared -Wall -Wextra -o $@ -fPIC $<
 
 $(BINDIR)%.o: $(SRCDIRS)%.cpp
 	@$(CC) -MMD -MF $@.d $(CXXFLAGS) $< -o $@
