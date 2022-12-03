@@ -12,9 +12,6 @@
  */
 
 #include <cstdint>
-#ifdef ELPIDIFOR_STANDART_EXTENDED
-#include "optionals.hpp"
-#endif /* ELPIDIFOR_STANDART_EXTENDED */
 #include <cstddef>
 
 namespace booba { // boot of outstanding best api
@@ -345,5 +342,9 @@ namespace booba { // boot of outstanding best api
      */
     extern ApplicationContext* APPCONTEXT;
 }
+
+#ifdef ELPIDIFOR_STANDART_EXTENDED
+#include "optionals.hpp"
+#endif /* ELPIDIFOR_STANDART_EXTENDED */
 
 #endif /* TOOLS_HPP */

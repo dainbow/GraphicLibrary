@@ -41,13 +41,13 @@ class FlexImageWindow : public ImageWindow {
         
         double imageXMax_;
         double imageYMax_;
-
+    protected:
         double imageX_ = 0;
         double imageY_ = 0;
 
         uint32_t imageWidth_;
         uint32_t imageHeight_;
-
+    private:
         ScrollBar* yScroll_;
         ScrollBar* xScroll_;
 

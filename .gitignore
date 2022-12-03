@@ -1,2 +1,4 @@
-.VSCodeCounter/
+﻿.VSCodeCounter/
 bin/
+Graph.out
+Plugins/*.so

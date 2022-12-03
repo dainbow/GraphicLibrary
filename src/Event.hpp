@@ -243,14 +243,14 @@ class Event {
                 type_ = EventType::KeyPressed;
 
                 Oleg_.kpedata.code = static_cast<Key>(sfEvent.key.code);
-                
-                if (sfEvent.key.alt) {
+
+                if (sfEvent.key.code == sf::Keyboard::Key::LAlt) {
                     Oleg_.kpedata.alt = 1;
                 }
-                else if (sfEvent.key.control) {
+                else if (sfEvent.key.code == sf::Keyboard::Key::LControl) {
                     Oleg_.kpedata.ctrl = 1;
                 }
-                else if (sfEvent.key.shift) {
+                else if (sfEvent.key.code == sf::Keyboard::Key::LShift) {
                     Oleg_.kpedata.shift = 1;
                 }
 

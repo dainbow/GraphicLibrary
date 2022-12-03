@@ -12,8 +12,11 @@ DEPENDENCES = $(addsuffix .d,$(OBJECTS))
 
 EXECUTABLE = Graph.out
 
-$(EXECUTABLE): $(OBJECTS) ./Plugins/curves.aboba.so ./Plugins/dain.aboba.so
+$(EXECUTABLE): $(OBJECTS) ./Plugins/curves.aboba.so ./Plugins/dain.aboba.so ./Plugins/patch.aboba.so
 	@$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+
+./Plugins/patch.aboba.so: ./Plugins/src/DainPatch/DainPatch.cpp ./Plugins/src/DainPatch/DainPatch.hpp ./Plugins/src/tools.hpp
+	@$(CC) -shared -Wall -Wextra -o $@ -fPIC $<
 
 ./Plugins/curves.aboba.so: ./Plugins/src/DainCurves/DainCurves.cpp ./Plugins/src/DainCurves/DainCurves.hpp ./Plugins/src/tools.hpp
 	@$(CC) -shared -Wall -Wextra -o $@ -fPIC $<

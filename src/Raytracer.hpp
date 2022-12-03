@@ -403,7 +403,7 @@ class Raytracer : public Canvas, public Serializeable {
 
         virtual void ReDraw() override {
             if (isRerender_ == 0) {
-                FlexImageWindow::ReDraw();
+                Canvas::ReDraw();
 
                 return;
             }
@@ -443,11 +443,11 @@ class Raytracer : public Canvas, public Serializeable {
                     renderRow_++;
                 }
 
-                FlexImageWindow::ReDraw();
+                Canvas::ReDraw();
             }
 
             isRerender_ = 0;
-            FlexImageWindow::ReDraw();
+            Canvas::ReDraw();
         }
 
         ~Raytracer() {

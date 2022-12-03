@@ -11,6 +11,7 @@ void booba::addFilter(booba::Tool* tool) {
 }
 
 ToolManager::ToolManager() :
+secondLayer_(nullptr),
 activeTool_(nullptr),
 plugins_(),
 tools_(),
@@ -112,5 +113,9 @@ void* booba::getLibSymbol(GUID guid, const char* name) {
     }
 
     return dlsym(handler, name);
+}
+
+booba::Image* booba::getHiddenLayerID() {
+    return ToolManager::GetInstance().GetSecondLayer();
 }
 

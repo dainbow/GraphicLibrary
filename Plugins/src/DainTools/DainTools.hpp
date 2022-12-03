@@ -8,6 +8,9 @@
 #include <string>
 #include <set>
 
+#define ELPIDIFOR_STANDART_EXTENDED
+#define ELPIDIFOR_HIDDEN_LAYER
+
 #include "../tools.hpp"
 
 const std::string soPath        = "./Icons/dain/";

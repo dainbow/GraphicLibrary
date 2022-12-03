@@ -77,6 +77,26 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
         return;
     }
 
+    CordsPair moveCords = {int32_t(event->Oleg.motion.x), int32_t(event->Oleg.motion.y)};
+    booba::Image* secondLayer = booba::getHiddenLayerID();
+
+    for (int32_t curX = std::max(0, moveCords.x - brushSize_); curX < std::min(int32_t(secondLayer->getW()), moveCords.x + brushSize_); curX++) {
+        for (int32_t curY = std::max(0, moveCords.y - brushSize_); curY < std::min(int32_t(secondLayer->getH()), moveCords.y + brushSize_); curY++) {
+            if (((std::pow(curX - moveCords.x, 2) + std::pow(curY - moveCords.y, 2)) <= (std::pow(brushSize_, 2))) &&
+                ((std::pow(curX - moveCords.x, 2) + std::pow(curY - moveCords.y, 2)) >= (std::pow(brushSize_ - 3, 2)))) {
+                if (std::sin(curX) * std::sin(curY) > 0) {
+                    secondLayer->setPixel(curX, curY, 0x000000ff);
+                }
+                else {
+                    secondLayer->setPixel(curX, curY, 0xffffffff);
+                }
+                
+                // printf("Drawing %d %d\n", curX, curY);
+                
+            }
+        }
+    }
+
     if (isClicked_ == 0) {
         return;
     }
@@ -84,8 +104,6 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
     if (GetTimeMiliseconds() < (lastTime_ + delay_)) {
         return;
     }
-
-    CordsPair moveCords = {int32_t(event->Oleg.motion.x), int32_t(event->Oleg.motion.y)};
 
     if ((lastPoint_.x != -1) && (lastPoint_.y != -1)) {
         // printf("Brush drawing with transparency %lx\n", booba::APPCONTEXT->fgColor & uint8_t(transparency_ * 0xFF));

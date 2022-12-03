@@ -2,6 +2,9 @@
 
 #include <unordered_map>
 
+#define ELPIDIFOR_STANDART_EXTENDED
+#define ELPIDIFOR_HIDDEN_LAYER 
+
 #include "../Plugins/src/tools.hpp"
 
 #include "SkinManager.hpp"
@@ -39,6 +42,8 @@ struct std::equal_to<booba::GUID> {
 
 class ToolManager {
     private:
+        booba::Image* secondLayer_;
+
         static ToolManager* instance_;
         booba::Tool* activeTool_;
 
@@ -130,6 +135,14 @@ class ToolManager {
             }
            
             return nullptr;
+        }
+
+        void SetSecondLayer(booba::Image* image) {
+            secondLayer_ = image;
+        }
+
+        booba::Image* GetSecondLayer() {
+            return secondLayer_;
         }
 };
 
@@ -384,6 +397,8 @@ class CanvasForTool : public ImageWindow {
 
     class Canvas : public FlexImageWindow {
         private:
+            Image secondLayer_;
+
             uint32_t curToolIdx_;
 
             bool isShift_;
@@ -407,12 +422,14 @@ class CanvasForTool : public ImageWindow {
 
             Canvas(uint32_t x, uint32_t y, uint32_t width, uint32_t height, ToolPalette* palette) :
             FlexImageWindow(x, y, width, height),
+            secondLayer_(width, height),
             curToolIdx_(0),
             isShift_(0), isCtrl_(0), isAlt_(0),
             toolManager_(ToolManager::GetInstance()),
             toolPalette_(palette),
             toolWindow_(new ToolWindow())
             {
+                toolManager_.SetSecondLayer(&secondLayer_);
                 App::GetInstance() += toolWindow_;
 
                 std::string dlPath = "./Plugins";
@@ -456,6 +473,10 @@ class CanvasForTool : public ImageWindow {
 
                     standartEvent.Oleg_.mbedata.x += int32_t(GetImageXShift());
                     standartEvent.Oleg_.mbedata.y += int32_t(GetImageYShift());
+                
+                    standartEvent.Oleg_.mbedata.alt   = isAlt_;
+                    standartEvent.Oleg_.mbedata.shift = isShift_;
+                    standartEvent.Oleg_.mbedata.ctrl  = isCtrl_;
                 }
                 else if (event.type_ == EventType::MouseMoved) {
                     CordsPair convertedCords = ConvertRealXY({event.Oleg_.motion.x, event.Oleg_.motion.y});
@@ -490,7 +511,6 @@ class CanvasForTool : public ImageWindow {
                 if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
 
-                    stEvent.Oleg.mbedata.ctrl = 1;
                     toolManager_.ApplyActive(&image_, &stEvent);
                     SetChanged();
                 }
@@ -535,8 +555,16 @@ class CanvasForTool : public ImageWindow {
                 ReleaseKeys();
             }
 
+            virtual void ReDraw() override {
+                FlexImageWindow::ReDraw();
+                // std::cout << "Canvas redraw\n";
+
+                secondLayer_.rotation_ = 0;
+                secondLayer_.Draw(widgetContainer_, {int32_t(GetShiftX()), int32_t(GetShiftY())}, Vector(imageX_, imageY_), imageWidth_, imageHeight_);
+                secondLayer_.Clear();
+            }
+
             ~Canvas() {}
-        
     };
 
     const uint32_t DefaultToolButtonWidth  = 50;

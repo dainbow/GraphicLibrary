@@ -216,7 +216,9 @@ class RealWindow : public Window {
                 }
                 
                 case EventType::KeyReleased: {
+                    OnKeyboardRelease(myEvent);
 
+                    break;
                 }
 
                 case EventType::NoEvent:

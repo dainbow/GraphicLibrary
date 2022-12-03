@@ -69,11 +69,12 @@ class Image : public booba::Image {
         }
 
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
-            MyColor curColor = (realImage_.getPixel(width, height).r << 24u) + (realImage_.getPixel(width, height).g << 16u) + (realImage_.getPixel(width, height).b << 8u) + realImage_.getPixel(width, height).a;
-            MyColor nextColor = (color.red_ << 24u) + (color.green_ << 16u) + (color.blue_ << 8u) + color.alpha_;
-            MyColor resultColor = curColor * (1.0 - double(nextColor.alpha_) / 255.0) + nextColor * (double(nextColor.alpha_) / 255.0);
+            // MyColor curColor = (realImage_.getPixel(width, height).r << 24u) + (realImage_.getPixel(width, height).g << 16u) + (realImage_.getPixel(width, height).b << 8u) + realImage_.getPixel(width, height).a;
+            // MyColor nextColor = (color.red_ << 24u) + (color.green_ << 16u) + (color.blue_ << 8u) + color.alpha_;
+            // MyColor resultColor = curColor * (1.0 - double(nextColor.alpha_) / 255.0) + nextColor * (double(nextColor.alpha_) / 255.0);
 
-            realImage_.setPixel(width, height, {resultColor.red_, resultColor.green_, resultColor.blue_});
+            // std::cout << (uint16_t)color.alpha_ << std::endl;
+            realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_, color.alpha_});
         }
 
         MyColor GetPixel(uint32_t width, uint32_t height) {
@@ -106,11 +107,9 @@ class Image : public booba::Image {
         }
 
         void Clear(const MyColor& color = 0) {
-            for (uint32_t curX = 0; curX < width_; curX++) {
-                for (uint32_t curY = 0; curY < height_; curY++) {
-                    realImage_.setPixel(curX, curY, {color.red_, color.green_, color.blue_});
-                }
-            }
+            sf::Uint32* pointer = reinterpret_cast<sf::Uint32*>(const_cast<sf::Uint8*>(realImage_.getPixelsPtr()));
+
+            std::fill(pointer, pointer + realImage_.getSize().x * realImage_.getSize().y, color);
         }
 
         void Draw(sf::RenderTexture& container, const CordsPair& x0y0, const Vector& xyVirt, const uint32_t width, const uint32_t height) const {
