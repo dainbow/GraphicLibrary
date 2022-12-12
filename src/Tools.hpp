@@ -380,6 +380,9 @@ class CanvasForTool : public ImageWindow {
 
                     standartEvent.Oleg_.mbedata.x += int32_t(GetImageXShift());
                     standartEvent.Oleg_.mbedata.y += int32_t(GetImageYShift());
+
+                    standartEvent.Oleg_.mbedata.button = event.Oleg_.mbedata.button;
+                    std::cout << "Button is " << static_cast<int32_t>(standartEvent.Oleg_.mbedata.button) << std::endl;
                 }
                 else if (event.type_ == EventType::MouseMoved) {
                     CordsPair convertedCords = ConvertRealXY({event.Oleg_.motion.x, event.Oleg_.motion.y});
@@ -408,7 +411,7 @@ class CanvasForTool : public ImageWindow {
             virtual void OnMove(const Event& curEvent) override {
                 Window::OnMove(curEvent);
 
-                if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
+                if (IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
                     
                     toolManager_.ApplyActive(&image_, &stEvent);

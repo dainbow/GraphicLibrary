@@ -77,15 +77,15 @@ class Image : public booba::Image {
         }
 
         void SetPixel(uint32_t width, uint32_t height, const MyColor& color = {}) {
-            MyColor curColor = (realImage_.getPixel(width, height).r << 24u) + (realImage_.getPixel(width, height).g << 16u) + (realImage_.getPixel(width, height).b << 8u) + realImage_.getPixel(width, height).a;
-            MyColor nextColor = (color.red_ << 24u) + (color.green_ << 16u) + (color.blue_ << 8u) + color.alpha_;
-            MyColor resultColor = curColor * (1.0 - double(nextColor.alpha_) / 255.0) + nextColor * (double(nextColor.alpha_) / 255.0);
+            // MyColor curColor = (realImage_.getPixel(width, height).r << 24u) + (realImage_.getPixel(width, height).g << 16u) + (realImage_.getPixel(width, height).b << 8u) + realImage_.getPixel(width, height).a;
+            // MyColor nextColor = (color.red_ << 24u) + (color.green_ << 16u) + (color.blue_ << 8u) + color.alpha_;
+            // MyColor resultColor = curColor * (1.0 - double(nextColor.alpha_) / 255.0) + nextColor * (double(nextColor.alpha_) / 255.0);
 
-            realImage_.setPixel(width, height, {resultColor.red_, resultColor.green_, resultColor.blue_});
+            realImage_.setPixel(width, height, {color.red_, color.green_, color.blue_, 0xff});
         }
 
         MyColor GetPixel(uint32_t width, uint32_t height) {
-            return MyColor((uint32_t(realImage_.getPixel(width, height).r) << 24) + (uint32_t(realImage_.getPixel(width, height).g) << 16) + (uint32_t(realImage_.getPixel(width, height).b) << 8));
+            return MyColor((uint32_t(realImage_.getPixel(width, height).r) << 24) + (uint32_t(realImage_.getPixel(width, height).g) << 16) + (uint32_t(realImage_.getPixel(width, height).b) << 8) + 0xff);
         }
 
         bool LoadFromFile(const sf::String& imageName) {
