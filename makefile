@@ -34,4 +34,4 @@ mkdirs:
 	mkdir $(BINDIR) $(SRCDIRS)
 
 clean: 
-	rm $(OBJECTS)
+	rm $(OBJECTS) $(DEPENDENCES)
