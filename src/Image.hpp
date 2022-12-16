@@ -47,7 +47,7 @@ class FlexImageWindow : public ImageWindow {
 
         uint32_t imageWidth_;
         uint32_t imageHeight_;
-    private:
+
         ScrollBar* yScroll_;
         ScrollBar* xScroll_;
 

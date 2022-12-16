@@ -88,6 +88,8 @@ uint32_t ConvertHSVToRGB(const HSV& hsv) {
 }
 
 void CurvesTool::buildSetupWidget() {
+    booba::setToolBarSize(450, 300);
+
     canvasIdx_ = booba::createCanvas(50, 20, CanvasWidth + 1, CanvasHeight + 1);
     resetButtonIdx_ = booba::createButton(50 + CanvasWidth + 20, 20, 70, 30, "Reset");
 

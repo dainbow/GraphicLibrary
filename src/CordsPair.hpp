@@ -11,3 +11,10 @@ struct CordsPair {
     x(int32_t(xS)), y(int32_t(yS))
     {}
 };
+
+struct Change {
+    CordsPair cords_;
+
+    uint32_t oldColor_;
+    uint32_t newColor_;
+};

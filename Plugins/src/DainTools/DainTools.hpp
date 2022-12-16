@@ -165,6 +165,8 @@ class BrushTool : public AbstractTool {
 
         virtual ~BrushTool() {}
 
+        static void DrawCircle(booba::Image* layer, const CordsPair& center, const int32_t radius, const uint32_t color1, const uint32_t color2);
+
         virtual void apply(booba::Image* image, const booba::Event* event) override;
         virtual void buildSetupWidget() override;
 }; 
@@ -305,7 +307,7 @@ class BucketTool : public AbstractTool {
             bool isAdded = 0;
 
             for (int32_t curX = leftX; curX < rightX; curX++) {
-                if (!(curImage->getPixel(curX, curY) == colorToErase)) {
+                if (!CompareColors(curImage->getPixel(curX, curY), colorToErase)) {
                     isAdded = 0;
                 }
                 else if (!isAdded) {
@@ -313,6 +315,24 @@ class BucketTool : public AbstractTool {
                     isAdded = 1;
                 }
             }
+        }
+
+        static bool CompareColors(const uint32_t color1, const uint32_t color2) {
+            uint8_t red1 = (color1 >> 8) & 0xff;
+            uint8_t red2 = (color2 >> 8) & 0xff;
+
+            uint8_t green1 = (color1 >> 16) & 0xff;
+            uint8_t green2 = (color2 >> 16) & 0xff;
+
+            uint8_t blue1 = (color1 >> 24) & 0xff;
+            uint8_t blue2 = (color2 >> 24) & 0xff;
+
+            const int32_t compareConst = 5;
+            if ((std::abs(red1 - red2) < compareConst) && (std::abs(green1 - green2) < compareConst) && (std::abs(blue1 - blue2) < compareConst)) {
+                return 1;
+            }
+
+            return 0;
         }
 
         static void Fill(booba::Image* curImage, const CordsPair& startPoint, const uint32_t fillColor) {
@@ -329,12 +349,12 @@ class BucketTool : public AbstractTool {
 
                 int32_t leftX = curPoint.x;
 
-                while ((leftX - 1) && (curImage->getPixel(leftX - 1, curPoint.y) == colorToErase)) {
+                while ((leftX - 1) && CompareColors(curImage->getPixel(leftX - 1, curPoint.y), colorToErase)) {
                     curImage->setPixel(leftX - 1, curPoint.y, fillColor);
                     leftX--;
                 }
 
-                while ((curPoint.x < int32_t(curImage->getW())) && (curImage->getPixel(curPoint.x, curPoint.y) == colorToErase)) {
+                while ((curPoint.x < int32_t(curImage->getW())) && CompareColors(curImage->getPixel(curPoint.x, curPoint.y), colorToErase)) {
                     curImage->setPixel(curPoint.x, curPoint.y, fillColor);
 
                     curPoint.x++;

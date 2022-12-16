@@ -6,6 +6,12 @@ void booba::addTool(booba::Tool* tool) {
     ToolManager::GetInstance().AddTool(tool);
 }
 
+bool booba::setToolBarSize(size_t w, size_t h) {
+    ToolManager::GetInstance().SetActiveSizes(w, h);
+
+    return 0;
+}
+
 void booba::addFilter(booba::Tool* tool) {
     addTool(tool);
 }
@@ -16,7 +22,8 @@ activeTool_(nullptr),
 plugins_(),
 tools_(),
 textures_(),
-curInitTool_(0), toolWindows_()
+curInitTool_(0), 
+currentSizes_(DefaultPropertyWindowWidth, DefaultPropertyWindowHeight), toolWindows_()
 {
     
 }

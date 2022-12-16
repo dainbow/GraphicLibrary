@@ -182,6 +182,7 @@ class RealWindow final : public Window {
 
                     break;
                 }
+                
 
                 case EventType::NoEvent:
                 case EventType::ButtonClicked:

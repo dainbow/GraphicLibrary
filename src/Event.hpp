@@ -235,6 +235,18 @@ class Event {
 
             case sf::Event::MouseButtonReleased: {
                 type_ = EventType::MouseReleased;
+                Oleg_.kpedata.code = static_cast<Key>(sfEvent.key.code);
+
+                Oleg_.kpedata.alt = Oleg_.kpedata.ctrl = Oleg_.kpedata.shift = 0;
+                if (sfEvent.key.code == sf::Keyboard::Key::LAlt) {
+                    Oleg_.kpedata.alt = 1;
+                }
+                else if (sfEvent.key.code == sf::Keyboard::Key::LControl) {
+                    Oleg_.kpedata.ctrl = 1;
+                }
+                else if (sfEvent.key.code == sf::Keyboard::Key::LShift) {
+                    Oleg_.kpedata.shift = 1;
+                }
 
                 break;
             }
@@ -243,6 +255,7 @@ class Event {
                 type_ = EventType::KeyPressed;
 
                 Oleg_.kpedata.code = static_cast<Key>(sfEvent.key.code);
+                Oleg_.kpedata.alt = Oleg_.kpedata.ctrl = Oleg_.kpedata.shift = 0;
 
                 if (sfEvent.key.code == sf::Keyboard::Key::LAlt) {
                     Oleg_.kpedata.alt = 1;
@@ -259,6 +272,18 @@ class Event {
 
             case sf::Event::KeyReleased: {
                 type_ = EventType::KeyReleased;
+                Oleg_.kpedata.code = static_cast<Key>(sfEvent.key.code);
+                Oleg_.kpedata.alt = Oleg_.kpedata.ctrl = Oleg_.kpedata.shift = 0;
+
+                if (sfEvent.key.code == sf::Keyboard::Key::LAlt) {
+                    Oleg_.kpedata.alt = 1;
+                }
+                else if (sfEvent.key.code == sf::Keyboard::Key::LControl) {
+                    Oleg_.kpedata.ctrl = 1;
+                }
+                else if (sfEvent.key.code == sf::Keyboard::Key::LShift) {
+                    Oleg_.kpedata.shift = 1;
+                }
 
                 break;
             }

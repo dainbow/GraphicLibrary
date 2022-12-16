@@ -48,6 +48,22 @@ void LineTool::buildSetupWidget() {
     sizeScrollIdx_ = booba::createSlider(20, 120, 400, 30, 0, 400, 0);
 }
 
+void BrushTool::DrawCircle(booba::Image* layer, const CordsPair& center, const int32_t radius, const uint32_t color1, const uint32_t color2) {
+    for (int32_t curX = std::max(0, center.x - radius); curX < std::min(int32_t(layer->getW()), center.x + radius); curX++) {
+        for (int32_t curY = std::max(0, center.y - radius); curY < std::min(int32_t(layer->getH()), center.y + radius); curY++) {
+            if (((std::pow(curX - center.x, 2) + std::pow(curY - center.y, 2)) <= (std::pow(radius, 2))) &&
+                ((std::pow(curX - center.x, 2) + std::pow(curY - center.y, 2)) >= (std::pow(radius - 3, 2)))) {
+                if (std::sin(curX) * std::sin(curY) > 0) {
+                    layer->setPixel(curX, curY, color1);
+                }
+                else {
+                    layer->setPixel(curX, curY, color2);
+                }
+            }
+        }
+    }
+}
+
 void BrushTool::apply(booba::Image* image, const booba::Event* event) {
     if (image == nullptr) {
         if (event->type == booba::EventType::SliderMoved) {
@@ -56,7 +72,7 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
             }
             else if (event->Oleg.smedata.id == transScrollIdx_) {
                 transparency_ = double(event->Oleg.smedata.value) / 50.0;
-                printf("New trans is %lg\n", transparency_);
+                // printf("New trans is %lg\n", transparency_);
             }
         }
 
@@ -80,22 +96,16 @@ void BrushTool::apply(booba::Image* image, const booba::Event* event) {
     CordsPair moveCords = {int32_t(event->Oleg.motion.x), int32_t(event->Oleg.motion.y)};
     booba::Image* secondLayer = booba::getHiddenLayerID();
 
-    for (int32_t curX = std::max(0, moveCords.x - brushSize_); curX < std::min(int32_t(secondLayer->getW()), moveCords.x + brushSize_); curX++) {
-        for (int32_t curY = std::max(0, moveCords.y - brushSize_); curY < std::min(int32_t(secondLayer->getH()), moveCords.y + brushSize_); curY++) {
-            if (((std::pow(curX - moveCords.x, 2) + std::pow(curY - moveCords.y, 2)) <= (std::pow(brushSize_, 2))) &&
-                ((std::pow(curX - moveCords.x, 2) + std::pow(curY - moveCords.y, 2)) >= (std::pow(brushSize_ - 3, 2)))) {
-                if (std::sin(curX) * std::sin(curY) > 0) {
-                    secondLayer->setPixel(curX, curY, 0x000000ff);
-                }
-                else {
-                    secondLayer->setPixel(curX, curY, 0xffffffff);
-                }
-                
-                // printf("Drawing %d %d\n", curX, curY);
-                
-            }
-        }
+    static CordsPair lastMove = {-1, -1};
+    static int32_t lastBrushSize = 0;
+
+    if ((lastMove.x != -1) && (lastMove.y != -1)) {
+        DrawCircle(secondLayer, lastMove, lastBrushSize, 0, 0);
     }
+    DrawCircle(secondLayer, moveCords, brushSize_, 0x000000ff, 0xffffffff);
+
+    lastMove = moveCords;
+    lastBrushSize = brushSize_;
 
     if (isClicked_ == 0) {
         return;

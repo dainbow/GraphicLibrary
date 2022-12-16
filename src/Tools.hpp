@@ -52,6 +52,8 @@ class ToolManager {
         std::vector<sf::Texture*> textures_; 
 
         uint64_t curInitTool_;
+
+        CordsPair currentSizes_;
         std::vector<Window*>      toolWindows_;
 
         ToolManager();
@@ -85,7 +87,7 @@ class ToolManager {
 
             textures_.push_back(newTexture);
 
-            toolWindows_.push_back(new Window(0, 0, DefaultPropertyWindowWidth, DefaultPropertyWindowHeight));
+            toolWindows_.push_back(new Window(0, 0, currentSizes_.x, currentSizes_.y));
             newTool->buildSetupWidget();
             curInitTool_++;
         }
@@ -143,6 +145,10 @@ class ToolManager {
 
         booba::Image* GetSecondLayer() {
             return secondLayer_;
+        }
+
+        void SetActiveSizes(size_t w, size_t h) {
+            currentSizes_ = {int32_t(w), int32_t(h)};
         }
 };
 
@@ -406,13 +412,34 @@ class CanvasForTool : public ImageWindow {
             bool isAlt_;
 
             void ProcessKey(const Event& stEvent) {
-                isShift_ = stEvent.Oleg_.kpedata.shift;
-                isCtrl_  = stEvent.Oleg_.kpedata.ctrl;
-                isAlt_   = stEvent.Oleg_.kpedata.alt;
+                isShift_ |= stEvent.Oleg_.kpedata.shift;
+                isCtrl_  |= stEvent.Oleg_.kpedata.ctrl;
+                isAlt_   |= stEvent.Oleg_.kpedata.alt;
+
+                // std::cout << isShift_ << isCtrl_ << isAlt_ << std::endl;
+                if (stEvent.Oleg_.kpedata.code == Key::Z) {
+                    if (isCtrl_ && !isShift_) {
+                        std::cout << "UNDO\n";
+                        image_.UndoBuffer();
+                    }
+                    else if (isCtrl_ && isShift_) {
+                        image_.NextdoBuffer();
+                    }
+                }
             }
 
-            void ReleaseKeys() {
-                isShift_ = isCtrl_ = isAlt_ = 0;
+            void ReleaseKeys(const Event& stEvent) {
+                if (isShift_) {
+                    isShift_ = !stEvent.Oleg_.kpedata.shift;
+                }
+                
+                if (isCtrl_) {
+                    isCtrl_  = !stEvent.Oleg_.kpedata.ctrl;
+                }
+
+                if (isAlt_) {
+                    isAlt_   = !stEvent.Oleg_.kpedata.alt;
+                }   
             }
 
         public:
@@ -454,6 +481,8 @@ class CanvasForTool : public ImageWindow {
                     else {
                         fprintf(stderr, "Unable to open lib: %s\n", dlerror());
                     }
+
+                    toolManager_.SetActiveSizes(DefaultPropertyWindowWidth, DefaultPropertyWindowHeight);
                 }
                 
                 toolPalette_->AddTools(this, &toolManager_, toolManager_.GetToolSize());
@@ -508,7 +537,9 @@ class CanvasForTool : public ImageWindow {
             virtual void OnClick(const Event& curEvent) override {
                 Window::OnClick(curEvent);
 
-                if (IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
+                if (!xScroll_->IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y}) &&
+                    !yScroll_->IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y}) &&
+                    IsClicked({curEvent.Oleg_.mbedata.x, curEvent.Oleg_.mbedata.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
 
                     toolManager_.ApplyActive(&image_, &stEvent);
@@ -519,7 +550,9 @@ class CanvasForTool : public ImageWindow {
             virtual void OnMove(const Event& curEvent) override {
                 Window::OnMove(curEvent);
 
-                if (IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y})) {
+                if (xScroll_->IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y}) &&
+                    yScroll_->IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y}) &&
+                    IsClicked({curEvent.Oleg_.motion.x, curEvent.Oleg_.motion.y})) {
                     booba::Event stEvent = ConvertToStandartEvent(curEvent);
                     
                     toolManager_.ApplyActive(&image_, &stEvent);
@@ -540,6 +573,9 @@ class CanvasForTool : public ImageWindow {
 
                 booba::Event stEvent = ConvertToStandartEvent(curEvent);
                 toolManager_.ApplyActive(&image_, &stEvent);
+
+                std::cout << "Moved head\n";
+                image_.MoveBuffer();
                 SetChanged();
             }
 
@@ -552,7 +588,7 @@ class CanvasForTool : public ImageWindow {
             virtual void OnKeyboardRelease(const Event& curEvent) override {
                 Window::OnKeyboardRelease(curEvent);
 
-                ReleaseKeys();
+                ReleaseKeys(curEvent);
             }
 
             virtual void ReDraw() override {
@@ -561,7 +597,6 @@ class CanvasForTool : public ImageWindow {
 
                 secondLayer_.rotation_ = 0;
                 secondLayer_.Draw(widgetContainer_, {int32_t(GetShiftX()), int32_t(GetShiftY())}, Vector(imageX_, imageY_), imageWidth_, imageHeight_);
-                secondLayer_.Clear();
             }
 
             ~Canvas() {}

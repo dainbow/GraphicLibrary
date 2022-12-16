@@ -85,6 +85,8 @@ class PatchTool : public AbstractTool {
             toolImage_ = PatchTexture;
         }
 
+        static void DrawCircle(booba::Image* layer, const CordsPair& center, const int32_t radius, const uint32_t color1, const uint32_t color2);
+
         virtual ~PatchTool() {}
 
         virtual void apply(booba::Image* image, const booba::Event* event) override;
